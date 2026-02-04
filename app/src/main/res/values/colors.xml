@@ -1,10 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="purple_200">#FFBB86FC</color>
-    <color name="purple_500">#FF6200EE</color>
-    <color name="purple_700">#FF3700B3</color>
-    <color name="teal_200">#FF03DAC5</color>
-    <color name="teal_700">#FF018786</color>
-    <color name="black">#FF000000</color>
-    <color name="white">#FFFFFFFF</color>
+    <!-- Light theme colors -->
+    <color name="calculator_background">#E6F2FF</color>
+    <color name="calculator_background_light">#F0F8FF</color>
+    <color name="display_background">#FFFFFF</color>
+    <color name="display_text">#2C3E50</color>
+
+    <!-- Button colors for light theme -->
+    <color name="button_number_bg">#FFFFFF</color>
+    <color name="button_number_text">#3498DB</color>
+    <color name="button_operation_bg">#3498DB</color>
+    <color name="button_operation_text">#FFFFFF</color>
+    <color name="button_equals_bg">#2980B9</color>
+    <color name="button_equals_text">#FFFFFF</color>
+
+    <!-- Shadow color -->
+    <color name="shadow_color">#20000000</color>
 </resources>

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Dark theme colors -->
+    <color name="calculator_background">#121212</color>
+    <color name="calculator_background_light">#1E1E1E</color>
+    <color name="display_background">#1E1E1E</color>
+    <color name="display_text">#FFFFFF</color>
+
+    <!-- Button colors for dark theme -->
+    <color name="button_number_bg">#2D2D2D</color>
+    <color name="button_number_text">#FFFFFF</color>
+    <color name="button_operation_bg">#FF9500</color>
+    <color name="button_operation_text">#FFFFFF</color>
+    <color name="button_equals_bg">#FF9500</color>
+    <color name="button_equals_text">#FFFFFF</color>
+
+    <!-- Shadow color -->
+    <color name="shadow_color">#40000000</color>
+</resources>

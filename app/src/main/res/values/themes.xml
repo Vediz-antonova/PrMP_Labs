@@ -1,4 +1,42 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.MobileLabs" parent="android:Theme.Material.Light.NoActionBar"/>
+    <!-- Base application theme for light mode -->
+    <style name="Theme.MobileLabs" parent="Theme.AppCompat.Light.NoActionBar">
+        <item name="colorPrimary">#3498DB</item>
+        <item name="colorPrimaryDark">#2980B9</item>
+        <item name="colorAccent">#FF9500</item>
+        <item name="android:statusBarColor">@color/calculator_background</item>
+        <item name="android:navigationBarColor">@color/calculator_background</item>
+        <item name="android:windowBackground">@color/calculator_background</item>
+    </style>
+
+    <!-- Base style for calculator buttons -->
+    <style name="Widget.Calculator.Button" parent="android:Widget.Material.Button">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">80dp</item>
+        <item name="android:layout_margin">4dp</item>
+        <item name="android:textSize">24sp</item>
+        <item name="android:insetTop">0dp</item>
+        <item name="android:insetBottom">0dp</item>
+        <item name="android:elevation">4dp</item>
+        <item name="android:stateListAnimator">@null</item>
+    </style>
+
+    <!-- Style for number buttons -->
+    <style name="Widget.Calculator.Button.Number" parent="Widget.Calculator.Button">
+        <item name="android:textColor">@color/button_number_text</item>
+        <item name="android:background">@drawable/button_number_bg</item>
+    </style>
+
+    <!-- Style for operations -->
+    <style name="Widget.Calculator.Button.Operation" parent="Widget.Calculator.Button">
+        <item name="android:textColor">@color/button_operation_text</item>
+        <item name="android:background">@drawable/button_operation_bg</item>
+    </style>
+
+    <!-- Style for equals button -->
+    <style name="Widget.Calculator.Button.Equals" parent="Widget.Calculator.Button.Operation">
+        <item name="android:textColor">@color/button_equals_text</item>
+        <item name="android:background">@drawable/button_equals_bg</item>
+    </style>
 </resources>
