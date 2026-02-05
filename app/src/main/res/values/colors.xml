@@ -16,4 +16,7 @@
 
     <!-- Shadow color -->
     <color name="shadow_color">#20000000</color>
+
+    <!-- Error color -->
+    <color name="error_red">#FF4444</color>
 </resources>
