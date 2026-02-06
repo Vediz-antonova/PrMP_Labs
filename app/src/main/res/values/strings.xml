@@ -29,5 +29,6 @@
 
     <string name="toast_delete_digit">Last digit deleted</string>
     <string name="toast_clear_display">Display cleared</string>
-    <string name="hint_gestures">Swipe ← to delete, → to clear, long press to clear all</string>
+    <string name="toast_copied">Result copied to clipboard</string>
+    <string name="hint_gestures">Swipe ← delete, → clear, long press clear all, double tap copy</string>
 </resources>

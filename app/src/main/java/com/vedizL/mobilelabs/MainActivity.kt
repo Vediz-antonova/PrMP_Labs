@@ -1,6 +1,5 @@
 package com.vedizL.mobilelabs
 
-import android.content.Context
 import android.content.SharedPreferences
 import android.os.Bundle
 import android.os.Handler
@@ -65,6 +64,9 @@ class MainActivity : AppCompatActivity() {
             • Long press on display
               Quick clear
             
+            • Double tap on display
+              Copy result to clipboard
+            
             Try it out!
         """.trimIndent()
 
@@ -117,6 +119,11 @@ class MainActivity : AppCompatActivity() {
                 onClearClick()
                 showToast("Display cleared")
             }
+
+            override fun onDoubleTap(e: MotionEvent): Boolean {
+                copyToClipboard()
+                return true
+            }
         })
 
         // Set touch listener for display
@@ -124,6 +131,21 @@ class MainActivity : AppCompatActivity() {
             gestureDetector.onTouchEvent(event)
             true
         }
+    }
+
+    private fun copyToClipboard() {
+        if (isErrorState) return
+
+        val clipboard = getSystemService(CLIPBOARD_SERVICE) as android.content.ClipboardManager
+        val clip = android.content.ClipData.newPlainText("Calculator result", currentInput)
+        clipboard.setPrimaryClip(clip)
+
+        tvDisplay.setBackgroundColor(ContextCompat.getColor(this, android.R.color.holo_blue_light))
+
+        Handler(Looper.getMainLooper()).postDelayed({
+            tvDisplay.setBackgroundResource(R.drawable.display_background)
+            showToast("Result copied to clipboard")
+        }, 200)
     }
 
     private fun onSwipeLeft() {
