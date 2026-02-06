@@ -1,5 +1,7 @@
 package com.vedizL.mobilelabs
 
+import android.content.Context
+import android.content.SharedPreferences
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -21,6 +23,9 @@ class MainActivity : AppCompatActivity() {
     private var isErrorState = false
 
     private lateinit var gestureDetector: GestureDetector
+    private lateinit var sharedPreferences: SharedPreferences
+    private val PREFS_NAME = "calculator_prefs"
+    private val KEY_FIRST_LAUNCH = "first_launch"
 
     companion object {
         private const val MAX_INPUT_LENGTH = 15
@@ -33,11 +38,44 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        sharedPreferences = getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
+        if (sharedPreferences.getBoolean(KEY_FIRST_LAUNCH, true)) {
+            showGestureTutorial()
+            sharedPreferences.edit().putBoolean(KEY_FIRST_LAUNCH, false).apply()
+        }
 
         tvDisplay = findViewById(R.id.tvDisplay)
         setupGestureDetector()
 
         setupButtonListeners()
+    }
+
+    private fun showGestureTutorial() {
+        val message = """
+            Welcome to Advanced Calculator!
+            
+            New Gesture Controls:
+            
+            • Swipe ← on display
+              Delete last digit
+            
+            • Swipe → on display  
+              Clear all input
+            
+            • Long press on display
+              Quick clear
+            
+            Try it out!
+        """.trimIndent()
+
+        android.app.AlertDialog.Builder(this)
+            .setTitle("Gesture Tutorial")
+            .setMessage(message)
+            .setPositiveButton("Got it!") { dialog, _ ->
+                dialog.dismiss()
+            }
+            .setCancelable(false)
+            .show()
     }
 
     private fun setupGestureDetector() {
