@@ -161,11 +161,11 @@ class MainActivity : AppCompatActivity() {
             if (currentInput.length > 1) {
                 currentInput = currentInput.dropLast(1)
 
-                if (currentInput == "-" || currentInput.isEmpty()) {
-                    currentInput = "0"
+                if (currentInput.endsWith(".")) {
+                    currentInput = currentInput.dropLast(1)
                 }
 
-                if (currentInput == "0.") {
+                if (currentInput == "-" || currentInput.isEmpty()) {
                     currentInput = "0"
                 }
 
