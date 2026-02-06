@@ -3,9 +3,13 @@ package com.vedizL.mobilelabs
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.view.GestureDetector
+import android.view.MotionEvent
 import android.widget.Button
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import java.util.Locale
 
 class MainActivity : AppCompatActivity() {
@@ -16,10 +20,14 @@ class MainActivity : AppCompatActivity() {
     private var shouldResetInput = false
     private var isErrorState = false
 
+    private lateinit var gestureDetector: GestureDetector
+
     companion object {
         private const val MAX_INPUT_LENGTH = 15
         private const val ERROR_MESSAGE = "Error"
         private const val ERROR_DISPLAY_TIME = 1500L
+        private const val SWIPE_THRESHOLD = 100
+        private const val SWIPE_VELOCITY_THRESHOLD = 100
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -27,8 +35,110 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         tvDisplay = findViewById(R.id.tvDisplay)
+        setupGestureDetector()
 
         setupButtonListeners()
+    }
+
+    private fun setupGestureDetector() {
+        gestureDetector = GestureDetector(this, object : GestureDetector.SimpleOnGestureListener() {
+            override fun onFling(
+                e1: MotionEvent?,
+                e2: MotionEvent,
+                velocityX: Float,
+                velocityY: Float
+            ): Boolean {
+                try {
+                    val diffY = e2.y - (e1?.y ?: 0f)
+                    val diffX = e2.x - (e1?.x ?: 0f)
+
+                    if (Math.abs(diffX) > Math.abs(diffY)) {
+                        if (Math.abs(diffX) > SWIPE_THRESHOLD && Math.abs(velocityX) > SWIPE_VELOCITY_THRESHOLD) {
+                            if (diffX > 0) {
+                                // Swipe right - clear all
+                                onSwipeRight()
+                            } else {
+                                // Swipe left - delete last character
+                                onSwipeLeft()
+                            }
+                            return true
+                        }
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+                return false
+            }
+
+            override fun onDown(e: MotionEvent): Boolean {
+                return true
+            }
+
+            override fun onLongPress(e: MotionEvent) {
+                // Long press on display - clear all
+                onClearClick()
+                showToast("Display cleared")
+            }
+        })
+
+        // Set touch listener for display
+        tvDisplay.setOnTouchListener { _, event ->
+            gestureDetector.onTouchEvent(event)
+            true
+        }
+    }
+
+    private fun onSwipeLeft() {
+        if (isErrorState) {
+            clearError()
+            return
+        }
+
+        // Visual feedback
+        tvDisplay.setBackgroundColor(ContextCompat.getColor(this, android.R.color.holo_orange_light))
+
+        Handler(Looper.getMainLooper()).postDelayed({
+            tvDisplay.setBackgroundResource(R.drawable.display_background)
+
+            if (currentInput.length > 1) {
+                currentInput = currentInput.dropLast(1)
+
+                if (currentInput == "-" || currentInput.isEmpty()) {
+                    currentInput = "0"
+                }
+
+                if (currentInput == "0.") {
+                    currentInput = "0"
+                }
+
+                showToast("Last digit deleted")
+            } else {
+                currentInput = "0"
+                showToast("Display cleared")
+            }
+
+            updateDisplay()
+        }, 150)
+    }
+
+    private fun onSwipeRight() {
+        if (isErrorState) {
+            clearError()
+            return
+        }
+
+        // Visual feedback
+        tvDisplay.setBackgroundColor(ContextCompat.getColor(this, android.R.color.holo_green_light))
+
+        Handler(Looper.getMainLooper()).postDelayed({
+            tvDisplay.setBackgroundResource(R.drawable.display_background)
+            onClearClick()
+            showToast("Display cleared")
+        }, 150)
+    }
+
+    private fun showToast(message: String) {
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
     }
 
     private fun setupButtonListeners() {
@@ -115,7 +225,7 @@ class MainActivity : AppCompatActivity() {
             return
         }
 
-        if (previousInput != null && currentOperation != null && !shouldResetInput) {
+        if (previousInput != null && currentOperation != null) {
             calculateResult()
         }
 
@@ -252,9 +362,9 @@ class MainActivity : AppCompatActivity() {
         tvDisplay.text = currentInput
 
         if (isErrorState) {
-            tvDisplay.setTextColor(getColor(android.R.color.holo_red_dark))
+            tvDisplay.setTextColor(ContextCompat.getColor(this, android.R.color.holo_red_dark))
         } else {
-            tvDisplay.setTextColor(getColor(R.color.display_text))
+            tvDisplay.setTextColor(ContextCompat.getColor(this, R.color.display_text))
         }
     }
 

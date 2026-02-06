@@ -26,4 +26,8 @@
     <string name="button_seven">7</string>
     <string name="button_eight">8</string>
     <string name="button_nine">9</string>
+
+    <string name="toast_delete_digit">Last digit deleted</string>
+    <string name="toast_clear_display">Display cleared</string>
+    <string name="hint_gestures">Swipe ← to delete, → to clear, long press to clear all</string>
 </resources>
