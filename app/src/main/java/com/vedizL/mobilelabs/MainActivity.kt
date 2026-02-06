@@ -94,12 +94,10 @@ class MainActivity : AppCompatActivity() {
             return
         }
 
-        // Visual feedback
-        tvDisplay.setBackgroundColor(ContextCompat.getColor(this, android.R.color.holo_orange_light))
+        val swipeAnim = android.view.animation.AnimationUtils.loadAnimation(this, R.anim.swipe_left)
+        tvDisplay.startAnimation(swipeAnim)
 
         Handler(Looper.getMainLooper()).postDelayed({
-            tvDisplay.setBackgroundResource(R.drawable.display_background)
-
             if (currentInput.length > 1) {
                 currentInput = currentInput.dropLast(1)
 
@@ -111,14 +109,17 @@ class MainActivity : AppCompatActivity() {
                     currentInput = "0"
                 }
 
-                showToast("Last digit deleted")
+                showToast(getString(R.string.toast_delete_digit))
             } else {
                 currentInput = "0"
-                showToast("Display cleared")
+                showToast(getString(R.string.toast_clear_display))
             }
 
             updateDisplay()
-        }, 150)
+
+            val returnAnim = android.view.animation.AnimationUtils.loadAnimation(this, R.anim.return_to_normal)
+            tvDisplay.startAnimation(returnAnim)
+        }, 200)
     }
 
     private fun onSwipeRight() {
@@ -127,14 +128,16 @@ class MainActivity : AppCompatActivity() {
             return
         }
 
-        // Visual feedback
-        tvDisplay.setBackgroundColor(ContextCompat.getColor(this, android.R.color.holo_green_light))
+        val swipeAnim = android.view.animation.AnimationUtils.loadAnimation(this, R.anim.swipe_right)
+        tvDisplay.startAnimation(swipeAnim)
 
         Handler(Looper.getMainLooper()).postDelayed({
-            tvDisplay.setBackgroundResource(R.drawable.display_background)
             onClearClick()
-            showToast("Display cleared")
-        }, 150)
+            showToast(getString(R.string.toast_clear_display))
+
+            val returnAnim = android.view.animation.AnimationUtils.loadAnimation(this, R.anim.return_to_normal)
+            tvDisplay.startAnimation(returnAnim)
+        }, 200)
     }
 
     private fun showToast(message: String) {
