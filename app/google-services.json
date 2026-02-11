@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "492751342186",
+    "project_id": "calculator-827c8",
+    "storage_bucket": "calculator-827c8.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:492751342186:android:5b212f77daecc37607d813",
+        "android_client_info": {
+          "package_name": "com.vedizL.mobilelabs"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAeYNp26N_xJl-X-1U63QrKEH6mpeOURP8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

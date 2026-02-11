@@ -12,6 +12,8 @@ import androidx.core.content.ContextCompat
 import com.vedizL.mobilelabs.model.Calculator
 import com.vedizL.mobilelabs.utils.Constants
 import com.vedizL.mobilelabs.utils.GestureController
+import com.google.firebase.analytics.FirebaseAnalytics
+import com.google.firebase.analytics.ktx.logEvent
 
 class MainActivity : AppCompatActivity() {
     private lateinit var tvDisplay: TextView
@@ -22,6 +24,12 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        // Firebase test event
+        val analytics = FirebaseAnalytics.getInstance(this)
+        analytics.logEvent("firebase_test_event") {
+            param("status", "success")
+        }
 
         // Initialize SharedPreferences
         sharedPreferences = getSharedPreferences(Constants.PREFS_NAME, MODE_PRIVATE)
