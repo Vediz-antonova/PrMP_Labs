@@ -6,6 +6,17 @@
                                                    android:layout_height="match_parent"
                                                    android:background="@color/calculator_background"
                                                    tools:context=".MainActivity">
+    <com.google.android.material.appbar.MaterialToolbar
+            android:id="@+id/toolbar"
+            android:layout_width="0dp"
+            android:layout_height="?attr/actionBarSize"
+            android:background="@color/black"
+            android:theme="@style/ThemeOverlay.Material3.Dark.ActionBar"
+            app:title="Calculator"
+            app:titleTextColor="@android:color/white"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
 
     <!-- Display for the calculator -->
     <TextView
@@ -19,9 +30,9 @@
             android:text="@string/initial_display_value"
             android:textColor="@color/display_text"
             android:textSize="48sp"
+            app:layout_constraintTop_toBottomOf="@id/toolbar"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintStart_toStartOf="parent"/>
 
     <LinearLayout
             android:id="@+id/glButtons"

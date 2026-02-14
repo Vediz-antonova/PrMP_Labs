@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <color name="black">#000000</color>
+
     <!-- Dark theme colors -->
     <color name="calculator_background">#121212</color>
     <color name="calculator_background_light">#1E1E1E</color>

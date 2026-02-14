@@ -4,16 +4,19 @@ import android.content.SharedPreferences
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.view.Menu
+import android.view.MenuItem
 import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.content.ContextCompat
 import com.vedizL.mobilelabs.model.Calculator
 import com.vedizL.mobilelabs.utils.Constants
 import com.vedizL.mobilelabs.utils.GestureController
-import com.google.firebase.analytics.FirebaseAnalytics
-import com.google.firebase.analytics.ktx.logEvent
+import com.google.android.material.appbar.MaterialToolbar
+import androidx.core.content.edit
 
 class MainActivity : AppCompatActivity() {
     private lateinit var tvDisplay: TextView
@@ -25,26 +28,21 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        // Firebase test event
-        val analytics = FirebaseAnalytics.getInstance(this)
-        analytics.logEvent("firebase_test_event") {
-            param("status", "success")
-        }
-
-        // Initialize SharedPreferences
         sharedPreferences = getSharedPreferences(Constants.PREFS_NAME, MODE_PRIVATE)
 
-        // Show tutorial on first launch
+        applyTheme(sharedPreferences.getString("app_theme", "system")!!)
+
+        val toolbar = findViewById<MaterialToolbar>(R.id.toolbar)
+        setSupportActionBar(toolbar)
+
         if (sharedPreferences.getBoolean(Constants.KEY_FIRST_LAUNCH, true)) {
             showGestureTutorial()
-            sharedPreferences.edit().putBoolean(Constants.KEY_FIRST_LAUNCH, false).apply()
+            sharedPreferences.edit {putBoolean(Constants.KEY_FIRST_LAUNCH, false)}
         }
 
-        // Initialize views and components
         tvDisplay = findViewById(R.id.tvDisplay)
         calculator = Calculator()
 
-        // Setup gesture controller
         gestureController = GestureController(
             context = this,
             calculator = calculator,
@@ -53,16 +51,57 @@ class MainActivity : AppCompatActivity() {
             onShowToast = { message -> showToast(message) }
         )
 
-        // Setup button listeners
         setupButtonListeners()
 
-        // Restore state if available
         if (savedInstanceState != null) {
             restoreCalculatorState(savedInstanceState)
         }
 
-        // Initial display update
         updateDisplay()
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        menuInflater.inflate(R.menu.menu_main, menu)
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            R.id.action_theme -> {
+                showThemeDialog()
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
+        }
+    }
+
+    private fun showThemeDialog() {
+        val themes = arrayOf("Light", "Dark", "System default")
+
+        android.app.AlertDialog.Builder(this)
+            .setTitle("Choose theme")
+            .setItems(themes) { _, which ->
+                val selected = when (which) {
+                    0 -> "light"
+                    1 -> "dark"
+                    else -> "system"
+                }
+                saveTheme(selected)
+                applyTheme(selected)
+            }
+            .show()
+    }
+
+    private fun saveTheme(theme: String) {
+        sharedPreferences.edit {putString("app_theme", theme)}
+    }
+
+    private fun applyTheme(theme: String) {
+        when (theme) {
+            "light" -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
+            "dark" -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
+            "system" -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
+        }
     }
 
     private fun showGestureTutorial() {
@@ -197,7 +236,6 @@ class MainActivity : AppCompatActivity() {
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
     }
 
-    // State saving/restoring
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
         val state = calculator.saveState()
