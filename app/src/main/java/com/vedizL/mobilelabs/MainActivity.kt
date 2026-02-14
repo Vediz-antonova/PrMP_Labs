@@ -1,6 +1,6 @@
 package com.vedizL.mobilelabs
 
-import android.content.SharedPreferences
+import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -10,36 +10,40 @@ import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.content.ContextCompat
+import com.google.android.material.appbar.MaterialToolbar
+import com.vedizL.mobilelabs.data.preferences.ThemePreferences
 import com.vedizL.mobilelabs.model.Calculator
+import com.vedizL.mobilelabs.ui.settings.SettingsActivity
+import com.vedizL.mobilelabs.ui.theme.ThemeManager
 import com.vedizL.mobilelabs.utils.Constants
 import com.vedizL.mobilelabs.utils.GestureController
-import com.google.android.material.appbar.MaterialToolbar
-import androidx.core.content.edit
 
 class MainActivity : AppCompatActivity() {
     private lateinit var tvDisplay: TextView
     private lateinit var calculator: Calculator
     private lateinit var gestureController: GestureController
-    private lateinit var sharedPreferences: SharedPreferences
+    private lateinit var prefs: ThemePreferences
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        sharedPreferences = getSharedPreferences(Constants.PREFS_NAME, MODE_PRIVATE)
+        // Preferences + Theme
+        prefs = ThemePreferences(this)
+        ThemeManager.applyTheme(prefs.getThemeMode())
 
-        applyTheme(sharedPreferences.getString("app_theme", "system")!!)
-
+        // Toolbar
         val toolbar = findViewById<MaterialToolbar>(R.id.toolbar)
         setSupportActionBar(toolbar)
 
-        if (sharedPreferences.getBoolean(Constants.KEY_FIRST_LAUNCH, true)) {
+        // Tutorial
+        if (prefs.getBoolean(Constants.KEY_FIRST_LAUNCH, true)) {
             showGestureTutorial()
-            sharedPreferences.edit {putBoolean(Constants.KEY_FIRST_LAUNCH, false)}
+            prefs.setBoolean(Constants.KEY_FIRST_LAUNCH, false)
         }
 
+        // Calculator UI
         tvDisplay = findViewById(R.id.tvDisplay)
         calculator = Calculator()
 
@@ -67,61 +71,39 @@ class MainActivity : AppCompatActivity() {
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
+
             R.id.action_theme -> {
-                showThemeDialog()
+                toggleTheme()
                 true
             }
+
+            R.id.action_settings -> {
+                startActivity(Intent(this, SettingsActivity::class.java))
+                true
+            }
+
             else -> super.onOptionsItemSelected(item)
         }
     }
 
-    private fun showThemeDialog() {
-        val themes = arrayOf("Light", "Dark", "System default")
-
-        android.app.AlertDialog.Builder(this)
-            .setTitle("Choose theme")
-            .setItems(themes) { _, which ->
-                val selected = when (which) {
-                    0 -> "light"
-                    1 -> "dark"
-                    else -> "system"
-                }
-                saveTheme(selected)
-                applyTheme(selected)
-            }
-            .show()
-    }
-
-    private fun saveTheme(theme: String) {
-        sharedPreferences.edit {putString("app_theme", theme)}
-    }
-
-    private fun applyTheme(theme: String) {
-        when (theme) {
-            "light" -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
-            "dark" -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
-            "system" -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
-        }
+    private fun toggleTheme() {
+        val current = prefs.getThemeMode()
+        val newMode = if (current == "light") "dark" else "light"
+        prefs.saveThemeMode(newMode)
+        ThemeManager.applyTheme(newMode)
     }
 
     private fun showGestureTutorial() {
         val message = """
             Welcome to Advanced Calculator!
-            
+
             New Gesture Controls:
-            
-            • Swipe ← on display
-              Delete last digit
-            
-            • Swipe → on display  
-              Clear all input
-            
-            • Long press on display
-              Quick clear
-            
-            • Double tap on display
-              Copy result to clipboard
-            
+
+            • Swipe ← on display — delete last digit
+            • Swipe → on display — clear all input
+            • Long press — quick clear
+            • Double tap — copy result
+
             Try it out!
         """.trimIndent()
 
@@ -134,7 +116,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupButtonListeners() {
-        // Number buttons
         findViewById<Button>(R.id.btn0).setOnClickListener { onNumberClick("0") }
         findViewById<Button>(R.id.btn1).setOnClickListener { onNumberClick("1") }
         findViewById<Button>(R.id.btn2).setOnClickListener { onNumberClick("2") }
@@ -146,7 +127,6 @@ class MainActivity : AppCompatActivity() {
         findViewById<Button>(R.id.btn8).setOnClickListener { onNumberClick("8") }
         findViewById<Button>(R.id.btn9).setOnClickListener { onNumberClick("9") }
 
-        // Operation buttons
         findViewById<Button>(R.id.btnDecimal).setOnClickListener { onDecimalClick() }
         findViewById<Button>(R.id.btnAdd).setOnClickListener { onOperationClick(Constants.OP_ADD) }
         findViewById<Button>(R.id.btnSubtract).setOnClickListener { onOperationClick(Constants.OP_SUBTRACT) }
@@ -154,17 +134,14 @@ class MainActivity : AppCompatActivity() {
         findViewById<Button>(R.id.btnDivide).setOnClickListener { onOperationClick(Constants.OP_DIVIDE) }
         findViewById<Button>(R.id.btnPercent).setOnClickListener { onPercentClick() }
 
-        // Special buttons
         findViewById<Button>(R.id.btnClear).setOnClickListener { onClearClick() }
         findViewById<Button>(R.id.btnPlusMinus).setOnClickListener { onPlusMinusClick() }
         findViewById<Button>(R.id.btnEquals).setOnClickListener { onEqualsClick() }
     }
 
     private fun onNumberClick(number: String) {
-        if (calculator.inputDigit(number)) {
-            updateDisplay()
-        } else if (calculator.isErrorState) {
-            // Handle error state with delay
+        if (calculator.inputDigit(number)) updateDisplay()
+        else if (calculator.isErrorState) {
             Handler(Looper.getMainLooper()).postDelayed({
                 calculator.clear()
                 updateDisplay()
@@ -173,23 +150,16 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun onDecimalClick() {
-        if (calculator.inputDecimal()) {
-            updateDisplay()
-        }
+        if (calculator.inputDecimal()) updateDisplay()
     }
 
     private fun onOperationClick(operation: String) {
-        if (calculator.performOperation(operation)) {
-            updateDisplay()
-        } else if (calculator.isErrorState) {
-            showErrorState()
-        }
+        if (calculator.performOperation(operation)) updateDisplay()
+        else if (calculator.isErrorState) showErrorState()
     }
 
     private fun onPercentClick() {
-        if (calculator.applyPercent()) {
-            updateDisplay()
-        }
+        if (calculator.applyPercent()) updateDisplay()
     }
 
     private fun onClearClick() {
@@ -198,34 +168,26 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun onPlusMinusClick() {
-        if (calculator.negate()) {
-            updateDisplay()
-        }
+        if (calculator.negate()) updateDisplay()
     }
 
     private fun onEqualsClick() {
-        if (calculator.calculateResult()) {
-            updateDisplay()
-        } else if (calculator.isErrorState) {
-            showErrorState()
-        }
+        if (calculator.calculateResult()) updateDisplay()
+        else if (calculator.isErrorState) showErrorState()
     }
 
     private fun updateDisplay() {
         tvDisplay.text = calculator.currentInput
-
-        // Update text color based on error state
-        if (calculator.isErrorState) {
-            tvDisplay.setTextColor(ContextCompat.getColor(this, android.R.color.holo_red_dark))
-        } else {
-            tvDisplay.setTextColor(ContextCompat.getColor(this, R.color.display_text))
-        }
+        tvDisplay.setTextColor(
+            if (calculator.isErrorState)
+                ContextCompat.getColor(this, android.R.color.holo_red_dark)
+            else
+                ContextCompat.getColor(this, R.color.display_text)
+        )
     }
 
     private fun showErrorState() {
         updateDisplay()
-
-        // Clear error after delay
         Handler(Looper.getMainLooper()).postDelayed({
             calculator.clear()
             updateDisplay()
@@ -234,16 +196,6 @@ class MainActivity : AppCompatActivity() {
 
     private fun showToast(message: String) {
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
-    }
-
-    override fun onSaveInstanceState(outState: Bundle) {
-        super.onSaveInstanceState(outState)
-        val state = calculator.saveState()
-        outState.putString("currentInput", state.currentInput)
-        outState.putString("previousInput", state.previousInput)
-        outState.putString("currentOperation", state.currentOperation)
-        outState.putBoolean("shouldResetInput", state.shouldResetInput)
-        outState.putBoolean("isErrorState", state.isErrorState)
     }
 
     private fun restoreCalculatorState(savedInstanceState: Bundle) {

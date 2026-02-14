@@ -31,4 +31,6 @@
     <string name="toast_clear_display">Display cleared</string>
     <string name="toast_copied">Result copied to clipboard</string>
     <string name="hint_gestures">Swipe ← delete, → clear, long press clear all, double tap copy</string>
+    <string name="theme">Theme</string>
+    <string name="settings">Settings</string>
 </resources>

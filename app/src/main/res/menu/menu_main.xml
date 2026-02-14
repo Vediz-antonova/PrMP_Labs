@@ -4,5 +4,11 @@
             android:id="@+id/action_theme"
             android:title="@string/theme"
             android:icon="@drawable/ic_theme"
-            app:showAsAction="always"/>
+            app:showAsAction="ifRoom"/>
+
+    <item
+            android:id="@+id/action_settings"
+            android:title="@string/settings"
+            app:showAsAction="never"/>
+
 </menu>
