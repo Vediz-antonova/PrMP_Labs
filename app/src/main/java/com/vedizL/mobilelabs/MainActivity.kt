@@ -11,39 +11,41 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.lifecycleScope
 import com.google.android.material.appbar.MaterialToolbar
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.ListenerRegistration
+import com.vedizL.mobilelabs.data.preferences.ThemeKeys
 import com.vedizL.mobilelabs.data.preferences.ThemePreferences
+import com.vedizL.mobilelabs.data.theme.ThemeRepository
 import com.vedizL.mobilelabs.model.Calculator
 import com.vedizL.mobilelabs.ui.settings.SettingsActivity
 import com.vedizL.mobilelabs.ui.theme.ThemeManager
 import com.vedizL.mobilelabs.utils.Constants
 import com.vedizL.mobilelabs.utils.GestureController
+import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
+
     private lateinit var tvDisplay: TextView
     private lateinit var calculator: Calculator
     private lateinit var gestureController: GestureController
     private lateinit var prefs: ThemePreferences
+    private val themeRepo = ThemeRepository()
+    private var themeListener: ListenerRegistration? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        prefs = ThemePreferences(this)
+        ThemeManager.applyDefaultTheme(prefs.getThemeMode())
+
         setContentView(R.layout.activity_main)
 
-        // Preferences + Theme
-        prefs = ThemePreferences(this)
-        ThemeManager.applyCustomColors(this)
-
-        // Toolbar
         val toolbar = findViewById<MaterialToolbar>(R.id.toolbar)
         setSupportActionBar(toolbar)
 
-        // Tutorial
-        if (prefs.getBoolean(Constants.KEY_FIRST_LAUNCH, true)) {
-            showGestureTutorial()
-            prefs.setBoolean(Constants.KEY_FIRST_LAUNCH, false)
-        }
-
-        // Calculator UI
         tvDisplay = findViewById(R.id.tvDisplay)
         calculator = Calculator()
 
@@ -52,16 +54,76 @@ class MainActivity : AppCompatActivity() {
             calculator = calculator,
             displayView = tvDisplay,
             onDisplayUpdate = { updateDisplay() },
-            onShowToast = { message -> showToast(message) }
+            onShowToast = { showToast(it) }
         )
-
-        setupButtonListeners()
 
         if (savedInstanceState != null) {
             restoreCalculatorState(savedInstanceState)
         }
 
+        ThemeManager.applyCustomColors(this)
+        setupButtonListeners()
         updateDisplay()
+
+        startThemeListener()
+    }
+
+    private fun startThemeListener() {
+        val uid = FirebaseAuth.getInstance().currentUser?.uid ?: return
+
+        themeListener = FirebaseFirestore.getInstance()
+            .collection("users")
+            .document(uid)
+            .collection("theme")
+            .document("settings")
+            .addSnapshotListener { snapshot, _ ->
+                if (snapshot != null && snapshot.exists()) {
+                    val data = snapshot.data ?: return@addSnapshotListener
+
+                    val mode = data["mode"] as? String ?: "light"
+                    prefs.saveThemeMode(mode)
+
+                    val custom = data["custom_enabled"] as? Boolean ?: false
+                    prefs.setCustomThemeEnabled(custom)
+
+                    if (custom) {
+                        prefs.saveColor(ThemeKeys.PRIMARY, (data["primary_color"] as? Long)?.toInt() ?: 0)
+                        prefs.saveColor(ThemeKeys.BUTTON, (data["button_color"] as? Long)?.toInt() ?: 0)
+                        prefs.saveColor(ThemeKeys.DISPLAY_BG, (data["display_bg"] as? Long)?.toInt() ?: 0)
+                        prefs.saveColor(ThemeKeys.DISPLAY_TEXT, (data["display_text"] as? Long)?.toInt() ?: 0)
+                    }
+
+                    ThemeManager.applyDefaultTheme(mode)
+                    ThemeManager.applyCustomColors(this)
+                    updateDisplay()
+                }
+            }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        ThemeManager.applyCustomColors(this)
+
+        if (prefs.isCustomThemeEnabled()) {
+            lifecycleScope.launch {
+                themeRepo.saveTheme(
+                    mapOf(
+                        "mode" to prefs.getThemeMode(),
+                        "custom_enabled" to true,
+                        "primary_color" to prefs.getColor(ThemeKeys.PRIMARY, 0),
+                        "button_color" to prefs.getColor(ThemeKeys.BUTTON, 0),
+                        "display_bg" to prefs.getColor(ThemeKeys.DISPLAY_BG, 0),
+                        "display_text" to prefs.getColor(ThemeKeys.DISPLAY_TEXT, 0),
+                        "source" to "custom"
+                    )
+                )
+            }
+        }
+    }
+
+    override fun onDestroy() {
+        themeListener?.remove()
+        super.onDestroy()
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -71,24 +133,16 @@ class MainActivity : AppCompatActivity() {
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
-
             R.id.action_theme -> {
                 toggleTheme()
                 true
             }
-
             R.id.action_settings -> {
                 startActivity(Intent(this, SettingsActivity::class.java))
                 true
             }
-
             else -> super.onOptionsItemSelected(item)
         }
-    }
-
-    override fun onResume() {
-        super.onResume()
-        ThemeManager.applyCustomColors(this)
     }
 
     private fun toggleTheme() {
@@ -98,30 +152,18 @@ class MainActivity : AppCompatActivity() {
         prefs.saveThemeMode(newMode)
         prefs.setCustomThemeEnabled(false)
 
+        lifecycleScope.launch {
+            themeRepo.saveTheme(
+                mapOf(
+                    "mode" to newMode,
+                    "custom_enabled" to false,
+                    "source" to "default"
+                )
+            )
+        }
+
         ThemeManager.applyDefaultTheme(newMode)
         recreate()
-    }
-
-    private fun showGestureTutorial() {
-        val message = """
-            Welcome to Advanced Calculator!
-
-            New Gesture Controls:
-
-            • Swipe ← on display — delete last digit
-            • Swipe → on display — clear all input
-            • Long press — quick clear
-            • Double tap — copy result
-
-            Try it out!
-        """.trimIndent()
-
-        android.app.AlertDialog.Builder(this)
-            .setTitle("Gesture Tutorial")
-            .setMessage(message)
-            .setPositiveButton("Got it!") { dialog, _ -> dialog.dismiss() }
-            .setCancelable(false)
-            .show()
     }
 
     private fun setupButtonListeners() {

@@ -12,7 +12,7 @@ class ThemePreferences(context: Context) {
     }
 
     fun getThemeMode(): String =
-        prefs.getString("theme_mode", "system") ?: "system"
+        prefs.getString("theme_mode", "light") ?: "light"
 
     fun saveColor(key: String, color: Int) {
         prefs.edit { putInt(key, color) }
@@ -20,13 +20,6 @@ class ThemePreferences(context: Context) {
 
     fun getColor(key: String, default: Int): Int =
         prefs.getInt(key, default)
-
-    fun getBoolean(key: String, default: Boolean): Boolean =
-        prefs.getBoolean(key, default)
-
-    fun setBoolean(key: String, value: Boolean) {
-        prefs.edit { putBoolean(key, value) }
-    }
 
     fun setCustomThemeEnabled(enabled: Boolean) {
         prefs.edit { putBoolean("custom_theme_enabled", enabled) }
