@@ -27,4 +27,11 @@ class ThemePreferences(context: Context) {
     fun setBoolean(key: String, value: Boolean) {
         prefs.edit { putBoolean(key, value) }
     }
+
+    fun setCustomThemeEnabled(enabled: Boolean) {
+        prefs.edit { putBoolean("custom_theme_enabled", enabled) }
+    }
+
+    fun isCustomThemeEnabled(): Boolean =
+        prefs.getBoolean("custom_theme_enabled", false)
 }

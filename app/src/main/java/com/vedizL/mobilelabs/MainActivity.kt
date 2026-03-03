@@ -31,7 +31,7 @@ class MainActivity : AppCompatActivity() {
 
         // Preferences + Theme
         prefs = ThemePreferences(this)
-        ThemeManager.applyTheme(prefs.getThemeMode())
+        ThemeManager.applyCustomColors(this)
 
         // Toolbar
         val toolbar = findViewById<MaterialToolbar>(R.id.toolbar)
@@ -86,11 +86,20 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    override fun onResume() {
+        super.onResume()
+        ThemeManager.applyCustomColors(this)
+    }
+
     private fun toggleTheme() {
         val current = prefs.getThemeMode()
         val newMode = if (current == "light") "dark" else "light"
+
         prefs.saveThemeMode(newMode)
-        ThemeManager.applyTheme(newMode)
+        prefs.setCustomThemeEnabled(false)
+
+        ThemeManager.applyDefaultTheme(newMode)
+        recreate()
     }
 
     private fun showGestureTutorial() {
