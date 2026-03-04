@@ -56,6 +56,7 @@ class MainActivity : AppCompatActivity() {
             onDisplayUpdate = { updateDisplay() },
             onShowToast = { showToast(it) }
         )
+        applyAdaptiveLayout(resources.configuration.orientation)
 
         if (savedInstanceState != null) {
             restoreCalculatorState(savedInstanceState)
@@ -63,6 +64,11 @@ class MainActivity : AppCompatActivity() {
 
         ThemeManager.applyCustomColors(this)
         setupButtonListeners()
+        if (!prefs.isTutorialShown()) {
+            showGestureTutorial()
+            prefs.setTutorialShown()
+        }
+
         updateDisplay()
 
         startThemeListener()
@@ -190,6 +196,28 @@ class MainActivity : AppCompatActivity() {
         findViewById<Button>(R.id.btnEquals).setOnClickListener { onEqualsClick() }
     }
 
+    private fun showGestureTutorial() {
+        val message = """
+        Welcome to Advanced Calculator!
+
+        New Gesture Controls:
+
+        • Swipe ← on display — delete last digit
+        • Swipe → on display — clear all input
+        • Long press — quick clear
+        • Double tap — copy result
+
+        Try it out!
+    """.trimIndent()
+
+        android.app.AlertDialog.Builder(this)
+            .setTitle("Gesture Tutorial")
+            .setMessage(message)
+            .setPositiveButton("Got it!") { dialog, _ -> dialog.dismiss() }
+            .setCancelable(false)
+            .show()
+    }
+
     private fun onNumberClick(number: String) {
         if (calculator.inputDigit(number)) updateDisplay()
         else if (calculator.isErrorState) {
@@ -258,5 +286,29 @@ class MainActivity : AppCompatActivity() {
             isErrorState = savedInstanceState.getBoolean("isErrorState", false)
         )
         calculator.restoreState(state)
+    }
+
+    override fun onConfigurationChanged(newConfig: android.content.res.Configuration) {
+        super.onConfigurationChanged(newConfig)
+        applyAdaptiveLayout(newConfig.orientation)
+    }
+
+    private fun applyAdaptiveLayout(orientation: Int) {
+        val display = tvDisplay
+        val buttons = listOf(
+            R.id.btn0, R.id.btn1, R.id.btn2, R.id.btn3, R.id.btn4,
+            R.id.btn5, R.id.btn6, R.id.btn7, R.id.btn8, R.id.btn9,
+            R.id.btnAdd, R.id.btnSubtract, R.id.btnMultiply, R.id.btnDivide,
+            R.id.btnDecimal, R.id.btnPercent, R.id.btnClear,
+            R.id.btnPlusMinus, R.id.btnEquals
+        ).map { findViewById<Button>(it) }
+
+        if (orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE) {
+            display.textSize = 35f
+            buttons.forEach { it.textSize = 18f }
+        } else {
+            display.textSize = 60f
+            buttons.forEach { it.textSize = 26f }
+        }
     }
 }

@@ -27,4 +27,11 @@ class ThemePreferences(context: Context) {
 
     fun isCustomThemeEnabled(): Boolean =
         prefs.getBoolean("custom_theme_enabled", false)
+
+    fun isTutorialShown(): Boolean =
+        prefs.getBoolean("tutorial_shown", false)
+
+    fun setTutorialShown() {
+        prefs.edit { putBoolean("tutorial_shown", true) }
+    }
 }
