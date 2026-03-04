@@ -22,4 +22,8 @@ object Constants {
     const val OP_SUBTRACT = "-"
     const val OP_MULTIPLY = "×"
     const val OP_DIVIDE = "÷"
+    const val OP_SQUARE = "^2"
+    const val OP_POWER = "^y"
+    const val OP_SQRT = "√"
+    const val OP_FACTORIAL = "n!"
 }

@@ -52,7 +52,9 @@ object ThemeManager {
             R.id.btn5, R.id.btn6, R.id.btn7, R.id.btn8, R.id.btn9,
             R.id.btnAdd, R.id.btnSubtract, R.id.btnMultiply, R.id.btnDivide,
             R.id.btnPercent, R.id.btnDecimal, R.id.btnEquals,
-            R.id.btnClear, R.id.btnPlusMinus
+            R.id.btnClear, R.id.btnPlusMinus, R.id.btnExpand,
+            R.id.btnSqrtRow, R.id.btnSquareRow, R.id.btnPowerRow,
+            R.id.btnFactorialRow
         )
 
         buttons.forEach { id ->

@@ -14,6 +14,7 @@ class Calculator {
     private var previousInput: String? = null
     private var currentOperation: String? = null
     private var shouldResetInput: Boolean = false
+    private var pendingOperation: String? = null
 
     // Number input
     fun inputDigit(digit: String): Boolean {
@@ -90,18 +91,49 @@ class Calculator {
     }
 
     fun calculateResult(): Boolean {
-        if (previousInput == null || currentOperation == null) return false
+        if (previousInput == null || (currentOperation == null && pendingOperation == null)) return false
+
+        // Handle immediate operations (square, sqrt, factorial)
+        if (pendingOperation != null) {
+            if (!calculatePendingOperation()) {
+                return false
+            }
+            pendingOperation = null
+            previousInput = null
+            return true
+        }
 
         val prev = previousInput!!.toDoubleOrNull() ?: return false
         val current = currentInput.toDoubleOrNull() ?: return false
 
         val result = when (currentOperation) {
-            Constants.OP_ADD -> prev + current
-            Constants.OP_SUBTRACT -> prev - current
-            Constants.OP_MULTIPLY -> prev * current
+            Constants.OP_ADD -> {
+                val res = prev + current
+                if (res.isInfinite() || res.isNaN()) {
+                    showError("Overflow")
+                    return false
+                }
+                res
+            }
+            Constants.OP_SUBTRACT -> {
+                val res = prev - current
+                if (res.isInfinite() || res.isNaN()) {
+                    showError("Overflow")
+                    return false
+                }
+                res
+            }
+            Constants.OP_MULTIPLY -> {
+                val res = prev * current
+                if (res.isInfinite() || res.isNaN()) {
+                    showError("Overflow")
+                    return false
+                }
+                res
+            }
             Constants.OP_DIVIDE -> {
                 if (current == 0.0) {
-                    showError()
+                    showError("Error")
                     return false
                 }
                 prev / current
@@ -110,6 +142,63 @@ class Calculator {
         }
 
         currentInput = formatNumber(result)
+        previousInput = null
+        currentOperation = null
+        shouldResetInput = false
+        return true
+    }
+
+    private fun calculatePendingOperation(): Boolean {
+        val value = previousInput!!.toDoubleOrNull() ?: return false
+
+        val result = when (pendingOperation) {
+            Constants.OP_POWER -> {
+                val exponent = currentInput.toDoubleOrNull() ?: return false
+                val res = Math.pow(value, exponent)
+                if (res.isInfinite() || res.isNaN()) {
+                    showError("Overflow")
+                    return false
+                }
+                res
+            }
+            Constants.OP_SQUARE -> {
+                val res = value * value
+                if (res.isInfinite() || res.isNaN()) {
+                    showError("Overflow")
+                    return false
+                }
+                res
+            }
+            Constants.OP_SQRT -> {
+                if (value < 0) {
+                    showError("Invalid")
+                    return false
+                }
+                Math.sqrt(value)
+            }
+            Constants.OP_FACTORIAL -> {
+                if (value < 0 || value != value.toLong().toDouble()) {
+                    showError("Invalid")
+                    return false
+                }
+                val n = value.toLong()
+                if (n > 20) {
+                    showError("Overflow")
+                    return false
+                }
+                var fact = 1L
+                for (i in 2..n) {
+                    fact *= i
+                }
+                fact.toDouble()
+            }
+            else -> return false
+        }
+
+        currentInput = formatNumber(result)
+        pendingOperation = null
+        previousInput = null
+        shouldResetInput = false
         return true
     }
 
@@ -121,8 +210,66 @@ class Calculator {
 
         val value = currentInput.toDoubleOrNull() ?: return false
         val result = value / 100
+
+        if (result.isInfinite() || result.isNaN()) {
+            showError("Overflow")
+            return false
+        }
+
         currentInput = formatNumber(result)
         return true
+    }
+
+    fun applySquare(): Boolean {
+        if (isErrorState) {
+            clearError()
+            return false
+        }
+
+        previousInput = currentInput
+        pendingOperation = Constants.OP_SQUARE
+        shouldResetInput = true
+        return calculatePendingOperation()
+    }
+
+    fun applySquareRoot(): Boolean {
+        if (isErrorState) {
+            clearError()
+            return false
+        }
+
+        previousInput = currentInput
+        pendingOperation = Constants.OP_SQRT
+        shouldResetInput = true
+        return calculatePendingOperation()
+    }
+
+    fun applyPower(): Boolean {
+        if (isErrorState) {
+            clearError()
+            return false
+        }
+
+        if (previousInput != null && currentOperation != null && !shouldResetInput) {
+            return calculateResult()
+        }
+
+        previousInput = currentInput
+        pendingOperation = Constants.OP_POWER
+        shouldResetInput = true
+        return true
+    }
+
+    fun applyFactorial(): Boolean {
+        if (isErrorState) {
+            clearError()
+            return false
+        }
+
+        previousInput = currentInput
+        pendingOperation = Constants.OP_FACTORIAL
+        shouldResetInput = true
+        return calculatePendingOperation()
     }
 
     // Special functions
@@ -132,6 +279,7 @@ class Calculator {
         previousInput = null
         currentOperation = null
         shouldResetInput = false
+        pendingOperation = null
     }
 
     fun negate(): Boolean {
@@ -141,6 +289,8 @@ class Calculator {
         }
 
         if (currentInput == Constants.INITIAL_DISPLAY_VALUE || currentInput == "0.") return false
+
+        if (currentInput.length >= Constants.MAX_INPUT_LENGTH) return false
 
         currentInput = if (currentInput.startsWith("-")) {
             currentInput.substring(1)
@@ -195,19 +345,29 @@ class Calculator {
     private fun formatNumber(number: Double): String {
         // Check for integer
         if (number % 1 == 0.0) {
-            val longValue = number.toLong()
-            return if (longValue.toString().length > Constants.MAX_INPUT_LENGTH) {
+            return try {
+                val longValue = number.toLong()
+                if (longValue.toString().length > Constants.MAX_INPUT_LENGTH) {
+                    showError("Overflow")
+                    Constants.ERROR_MESSAGE
+                } else {
+                    longValue.toString()
+                }
+            } catch (e: Exception) {
                 showError("Overflow")
                 Constants.ERROR_MESSAGE
-            } else {
-                longValue.toString()
             }
         }
 
         // Format decimal number
-        var formatted = String.format(Locale.US, "%.10f", number)
-            .trimEnd('0')
-            .trimEnd('.')
+        var formatted = try {
+            String.format(Locale.US, "%.10f", number)
+                .trimEnd('0')
+                .trimEnd('.')
+        } catch (e: Exception) {
+            showError("Error")
+            return Constants.ERROR_MESSAGE
+        }
 
         // Limit length
         if (formatted.length > Constants.MAX_INPUT_LENGTH) {
@@ -228,7 +388,8 @@ class Calculator {
             previousInput = previousInput,
             currentOperation = currentOperation,
             shouldResetInput = shouldResetInput,
-            isErrorState = isErrorState
+            isErrorState = isErrorState,
+            pendingOperation = pendingOperation
         )
     }
 
@@ -238,6 +399,7 @@ class Calculator {
         currentOperation = state.currentOperation
         shouldResetInput = state.shouldResetInput
         isErrorState = state.isErrorState
+        pendingOperation = state.pendingOperation
     }
 
     data class CalculatorState(
@@ -245,6 +407,7 @@ class Calculator {
         val previousInput: String?,
         val currentOperation: String?,
         val shouldResetInput: Boolean,
-        val isErrorState: Boolean
+        val isErrorState: Boolean,
+        val pendingOperation: String? = null
     )
 }

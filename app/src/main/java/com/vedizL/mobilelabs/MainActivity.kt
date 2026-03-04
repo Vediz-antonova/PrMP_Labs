@@ -6,7 +6,9 @@ import android.os.Handler
 import android.os.Looper
 import android.view.Menu
 import android.view.MenuItem
+import android.view.View
 import android.widget.Button
+import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -32,6 +34,9 @@ class MainActivity : AppCompatActivity() {
     private lateinit var calculator: Calculator
     private lateinit var gestureController: GestureController
     private lateinit var prefs: ThemePreferences
+    private lateinit var advancedRow: LinearLayout
+    private lateinit var contentContainer: LinearLayout
+    private var isAdvancedVisible = false
     private val themeRepo = ThemeRepository()
     private var themeListener: ListenerRegistration? = null
 
@@ -48,6 +53,8 @@ class MainActivity : AppCompatActivity() {
 
         tvDisplay = findViewById(R.id.tvDisplay)
         calculator = Calculator()
+        advancedRow = findViewById(R.id.advancedRow)
+        contentContainer = findViewById(R.id.contentContainer)
 
         gestureController = GestureController(
             context = this,
@@ -56,11 +63,12 @@ class MainActivity : AppCompatActivity() {
             onDisplayUpdate = { updateDisplay() },
             onShowToast = { showToast(it) }
         )
-        applyAdaptiveLayout(resources.configuration.orientation)
 
         if (savedInstanceState != null) {
             restoreCalculatorState(savedInstanceState)
         }
+
+        applyAdaptiveLayout(resources.configuration.orientation)
 
         ThemeManager.applyCustomColors(this)
         setupButtonListeners()
@@ -194,6 +202,39 @@ class MainActivity : AppCompatActivity() {
         findViewById<Button>(R.id.btnClear).setOnClickListener { onClearClick() }
         findViewById<Button>(R.id.btnPlusMinus).setOnClickListener { onPlusMinusClick() }
         findViewById<Button>(R.id.btnEquals).setOnClickListener { onEqualsClick() }
+
+        findViewById<Button>(R.id.btnExpand).setOnClickListener { toggleAdvancedPanel() }
+
+        findViewById<Button>(R.id.btnSqrtRow).setOnClickListener { onSqrtClick() }
+        findViewById<Button>(R.id.btnSquareRow).setOnClickListener { onSquareClick() }
+        findViewById<Button>(R.id.btnPowerRow).setOnClickListener { onPowerClick() }
+        findViewById<Button>(R.id.btnFactorialRow).setOnClickListener { onFactorialClick() }
+    }
+
+    private fun toggleAdvancedPanel() {
+        isAdvancedVisible = !isAdvancedVisible
+        
+        if (isAdvancedVisible) {
+            contentContainer.weightSum = 7f
+            advancedRow.layoutParams = (advancedRow.layoutParams as LinearLayout.LayoutParams).apply {
+                weight = 1f
+                height = 0
+            }
+            findViewById<LinearLayout>(R.id.glButtons).layoutParams = (findViewById<LinearLayout>(R.id.glButtons).layoutParams as LinearLayout.LayoutParams).apply {
+                weight = 5f
+            }
+            advancedRow.visibility = View.VISIBLE
+        } else {
+            contentContainer.weightSum = 6f
+            advancedRow.layoutParams = (advancedRow.layoutParams as LinearLayout.LayoutParams).apply {
+                weight = 0f
+                height = 0
+            }
+            findViewById<LinearLayout>(R.id.glButtons).layoutParams = (findViewById<LinearLayout>(R.id.glButtons).layoutParams as LinearLayout.LayoutParams).apply {
+                weight = 5f
+            }
+            advancedRow.visibility = View.GONE
+        }
     }
 
     private fun showGestureTutorial() {
@@ -241,6 +282,30 @@ class MainActivity : AppCompatActivity() {
         if (calculator.applyPercent()) updateDisplay()
     }
 
+    private fun onSqrtClick() {
+        if (calculator.applySquareRoot()) updateDisplay()
+        else if (calculator.isErrorState) showErrorState()
+    }
+
+    private fun onSquareClick() {
+        if (calculator.applySquare()) updateDisplay()
+        else if (calculator.isErrorState) showErrorState()
+    }
+
+    private fun onPowerClick() {
+        if (calculator.applyPower()) {
+            updateDisplay()
+            showToast("Enter exponent")
+        } else if (calculator.isErrorState) {
+            showErrorState()
+        }
+    }
+
+    private fun onFactorialClick() {
+        if (calculator.applyFactorial()) updateDisplay()
+        else if (calculator.isErrorState) showErrorState()
+    }
+
     private fun onClearClick() {
         calculator.clear()
         updateDisplay()
@@ -286,11 +351,19 @@ class MainActivity : AppCompatActivity() {
             isErrorState = savedInstanceState.getBoolean("isErrorState", false)
         )
         calculator.restoreState(state)
+        isAdvancedVisible = savedInstanceState.getBoolean("isAdvancedVisible", false)
+        advancedRow.visibility = if (isAdvancedVisible) View.VISIBLE else View.GONE
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putBoolean("isAdvancedVisible", isAdvancedVisible)
     }
 
     override fun onConfigurationChanged(newConfig: android.content.res.Configuration) {
         super.onConfigurationChanged(newConfig)
         applyAdaptiveLayout(newConfig.orientation)
+        advancedRow.visibility = if (isAdvancedVisible) View.VISIBLE else View.GONE
     }
 
     private fun applyAdaptiveLayout(orientation: Int) {
@@ -300,15 +373,21 @@ class MainActivity : AppCompatActivity() {
             R.id.btn5, R.id.btn6, R.id.btn7, R.id.btn8, R.id.btn9,
             R.id.btnAdd, R.id.btnSubtract, R.id.btnMultiply, R.id.btnDivide,
             R.id.btnDecimal, R.id.btnPercent, R.id.btnClear,
-            R.id.btnPlusMinus, R.id.btnEquals
+            R.id.btnPlusMinus, R.id.btnEquals, R.id.btnExpand,
+            R.id.btnSqrtRow, R.id.btnSquareRow, R.id.btnPowerRow,
+            R.id.btnFactorialRow
         ).map { findViewById<Button>(it) }
 
-        if (orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE) {
-            display.textSize = 35f
-            buttons.forEach { it.textSize = 18f }
+        val isLandscape = orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
+        val isPanelExpanded = isAdvancedVisible
+
+        if (isLandscape) {
+            display.textSize = if (isPanelExpanded) 8f else 12f
+            val buttonSize = if (isPanelExpanded) 12f else 14f
+            buttons.forEach { it.textSize = buttonSize }
         } else {
-            display.textSize = 60f
-            buttons.forEach { it.textSize = 26f }
+            display.textSize = 30f
+            buttons.forEach { it.textSize = 22f }
         }
     }
 }

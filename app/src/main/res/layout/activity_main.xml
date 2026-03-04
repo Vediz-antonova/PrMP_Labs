@@ -18,228 +18,327 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent" />
 
-    <!-- Display for the calculator -->
-    <TextView
-            android:id="@+id/tvDisplay"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_margin="16dp"
-            android:background="@drawable/display_background"
-            android:gravity="end|center_vertical"
-            android:padding="24dp"
-            android:text="@string/initial_display_value"
-            android:textColor="@color/display_text"
-            android:textSize="48sp"
-            app:layout_constraintTop_toBottomOf="@id/toolbar"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"/>
-
+    <!-- Content container with weighted rows -->
     <LinearLayout
-            android:id="@+id/glButtons"
+            android:id="@+id/contentContainer"
             android:layout_width="0dp"
             android:layout_height="0dp"
-            android:layout_margin="16dp"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="16dp"
             android:orientation="vertical"
+            android:weightSum="6"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/tvDisplay">
+            app:layout_constraintTop_toBottomOf="@id/toolbar">
 
-        <!-- Row 1: AC, +/-, %, ÷ -->
-        <LinearLayout
+        <!-- Display row (1/6 of space) -->
+        <TextView
+                android:id="@+id/tvDisplay"
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
                 android:layout_weight="1"
-                android:orientation="horizontal">
+                android:layout_marginStart="16dp"
+                android:layout_marginEnd="16dp"
+                android:background="@drawable/display_background"
+                android:gravity="end|center_vertical"
+                android:padding="16dp"
+                android:text="@string/initial_display_value"
+                android:textColor="@color/display_text"
+                android:textSize="40sp" />
+
+        <!-- Expandable Advanced Panel (1/6 of space when visible) -->
+        <LinearLayout
+                android:id="@+id/advancedRow"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="0"
+                android:layout_marginStart="16dp"
+                android:layout_marginEnd="16dp"
+                android:layout_marginTop="8dp"
+                android:layout_marginBottom="-8dp"
+                android:orientation="horizontal"
+                android:visibility="gone">
 
             <Button
-                    android:id="@+id/btnClear"
+                    android:id="@+id/btnSqrtRow"
                     style="@style/Widget.Calculator.Button.Operation"
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
                     android:layout_weight="1"
-                    android:text="@string/button_clear"
-                    tools:ignore="NestedWeights"/>
+                    android:layout_margin="4dp"
+                    android:textStyle="normal"
+                    android:fontFamily="sans-serif"
+                    android:text="@string/button_sqrt" />
 
             <Button
-                    android:id="@+id/btnPlusMinus"
+                    android:id="@+id/btnSquareRow"
                     style="@style/Widget.Calculator.Button.Operation"
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
                     android:layout_weight="1"
-                    android:text="@string/button_plus_minus" />
+                    android:layout_margin="4dp"
+                    android:textStyle="normal"
+                    android:fontFamily="sans-serif"
+                    android:text="@string/button_square" />
 
             <Button
-                    android:id="@+id/btnPercent"
+                    android:id="@+id/btnPowerRow"
                     style="@style/Widget.Calculator.Button.Operation"
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
                     android:layout_weight="1"
-                    android:text="@string/button_percent" />
+                    android:layout_margin="4dp"
+                    android:textStyle="normal"
+                    android:fontFamily="sans-serif"
+                    android:text="@string/button_power" />
 
             <Button
-                    android:id="@+id/btnDivide"
+                    android:id="@+id/btnFactorialRow"
                     style="@style/Widget.Calculator.Button.Operation"
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
                     android:layout_weight="1"
-                    android:text="@string/button_divide" />
+                    android:layout_margin="4dp"
+                    android:textStyle="normal"
+                    android:fontFamily="sans-serif"
+                    android:text="@string/button_factorial" />
         </LinearLayout>
 
-        <!-- Row 2: 7, 8, 9, × -->
+        <!-- Button rows container (5/6 of space) -->
         <LinearLayout
+                android:id="@+id/glButtons"
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
-                android:layout_weight="1"
-                android:orientation="horizontal">
+                android:layout_weight="5"
+                android:layout_marginStart="16dp"
+                android:layout_marginEnd="16dp"
+                android:layout_marginTop="8dp"
+                android:orientation="vertical">
 
-            <Button
-                    android:id="@+id/btn7"
-                    style="@style/Widget.Calculator.Button.Number"
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
+            <!-- Row 1: AC, %, +/-, ÷ -->
+            <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
                     android:layout_weight="1"
-                    android:text="@string/button_seven"
-                    tools:ignore="NestedWeights"/>
+                    android:orientation="horizontal">
 
-            <Button
-                    android:id="@+id/btn8"
-                    style="@style/Widget.Calculator.Button.Number"
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
+                <Button
+                        android:id="@+id/btnClear"
+                        style="@style/Widget.Calculator.Button.Operation"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:textStyle="normal"
+                        android:fontFamily="sans-serif"
+                        android:text="@string/button_clear"
+                        tools:ignore="NestedWeights"/>
+
+                <Button
+                        android:id="@+id/btnPercent"
+                        style="@style/Widget.Calculator.Button.Operation"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:textStyle="normal"
+                        android:fontFamily="sans-serif"
+                        android:text="@string/button_percent" />
+
+                <Button
+                        android:id="@+id/btnPlusMinus"
+                        style="@style/Widget.Calculator.Button.Operation"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:textStyle="normal"
+                        android:fontFamily="sans-serif"
+                        android:text="@string/button_plus_minus" />
+
+                <Button
+                        android:id="@+id/btnDivide"
+                        style="@style/Widget.Calculator.Button.Operation"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:textStyle="normal"
+                        android:fontFamily="sans-serif"
+                        android:text="@string/button_divide" />
+            </LinearLayout>
+
+            <!-- Row 2: 7, 8, 9, × -->
+            <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
                     android:layout_weight="1"
-                    android:text="@string/button_eight" />
+                    android:orientation="horizontal">
 
-            <Button
-                    android:id="@+id/btn9"
-                    style="@style/Widget.Calculator.Button.Number"
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
+                <Button
+                        android:id="@+id/btn7"
+                        style="@style/Widget.Calculator.Button.Number"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:text="@string/button_seven"
+                        tools:ignore="NestedWeights"/>
+
+                <Button
+                        android:id="@+id/btn8"
+                        style="@style/Widget.Calculator.Button.Number"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:text="@string/button_eight" />
+
+                <Button
+                        android:id="@+id/btn9"
+                        style="@style/Widget.Calculator.Button.Number"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:text="@string/button_nine" />
+
+                <Button
+                        android:id="@+id/btnMultiply"
+                        style="@style/Widget.Calculator.Button.Operation"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:textStyle="normal"
+                        android:fontFamily="sans-serif"
+                        android:text="@string/button_multiply" />
+            </LinearLayout>
+
+            <!-- Row 3: 4, 5, 6, - -->
+            <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
                     android:layout_weight="1"
-                    android:text="@string/button_nine" />
+                    android:orientation="horizontal">
 
-            <Button
-                    android:id="@+id/btnMultiply"
-                    style="@style/Widget.Calculator.Button.Operation"
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
+                <Button
+                        android:id="@+id/btn4"
+                        style="@style/Widget.Calculator.Button.Number"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:text="@string/button_four"
+                        tools:ignore="NestedWeights"/>
+
+                <Button
+                        android:id="@+id/btn5"
+                        style="@style/Widget.Calculator.Button.Number"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:text="@string/button_five" />
+
+                <Button
+                        android:id="@+id/btn6"
+                        style="@style/Widget.Calculator.Button.Number"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:text="@string/button_six" />
+
+                <Button
+                        android:id="@+id/btnSubtract"
+                        style="@style/Widget.Calculator.Button.Operation"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:textStyle="normal"
+                        android:fontFamily="sans-serif"
+                        android:text="@string/button_subtract" />
+            </LinearLayout>
+
+            <!-- Row 4: 1, 2, 3, + -->
+            <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
                     android:layout_weight="1"
-                    android:text="@string/button_multiply" />
-        </LinearLayout>
+                    android:orientation="horizontal">
 
-        <!-- Row 3: 4, 5, 6, - -->
-        <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="1"
-                android:orientation="horizontal">
+                <Button
+                        android:id="@+id/btn1"
+                        style="@style/Widget.Calculator.Button.Number"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:text="@string/button_one"
+                        tools:ignore="NestedWeights"/>
 
-            <Button
-                    android:id="@+id/btn4"
-                    style="@style/Widget.Calculator.Button.Number"
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
+                <Button
+                        android:id="@+id/btn2"
+                        style="@style/Widget.Calculator.Button.Number"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:text="@string/button_two" />
+
+                <Button
+                        android:id="@+id/btn3"
+                        style="@style/Widget.Calculator.Button.Number"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:text="@string/button_three" />
+
+                <Button
+                        android:id="@+id/btnAdd"
+                        style="@style/Widget.Calculator.Button.Operation"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:textStyle="normal"
+                        android:fontFamily="sans-serif"
+                        android:text="@string/button_add" />
+            </LinearLayout>
+
+            <!-- Row 5: ..., 0, ., = -->
+            <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
                     android:layout_weight="1"
-                    android:text="@string/button_four"
-                    tools:ignore="NestedWeights"/>
+                    android:orientation="horizontal">
 
-            <Button
-                    android:id="@+id/btn5"
-                    style="@style/Widget.Calculator.Button.Number"
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1"
-                    android:text="@string/button_five" />
+                <Button
+                        android:id="@+id/btnExpand"
+                        style="@style/Widget.Calculator.Button.Operation"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:textStyle="normal"
+                        android:fontFamily="sans-serif"
+                        android:text="@string/button_expand"
+                        tools:ignore="NestedWeights"/>
 
-            <Button
-                    android:id="@+id/btn6"
-                    style="@style/Widget.Calculator.Button.Number"
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1"
-                    android:text="@string/button_six" />
+                <Button
+                        android:id="@+id/btn0"
+                        style="@style/Widget.Calculator.Button.Number"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:text="@string/button_zero" />
 
-            <Button
-                    android:id="@+id/btnSubtract"
-                    style="@style/Widget.Calculator.Button.Operation"
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1"
-                    android:text="@string/button_subtract" />
-        </LinearLayout>
+                <Button
+                        android:id="@+id/btnDecimal"
+                        style="@style/Widget.Calculator.Button.Number"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:text="@string/button_decimal" />
 
-        <!-- Row 4: 1, 2, 3, + -->
-        <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="1"
-                android:orientation="horizontal">
+                <Button
+                        android:id="@+id/btnEquals"
+                        style="@style/Widget.Calculator.Button.Equals"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:textStyle="normal"
+                        android:fontFamily="sans-serif"
+                        android:text="@string/button_equals" />
+            </LinearLayout>
 
-            <Button
-                    android:id="@+id/btn1"
-                    style="@style/Widget.Calculator.Button.Number"
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1"
-                    android:text="@string/button_one"
-                    tools:ignore="NestedWeights"/>
-
-            <Button
-                    android:id="@+id/btn2"
-                    style="@style/Widget.Calculator.Button.Number"
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1"
-                    android:text="@string/button_two" />
-
-            <Button
-                    android:id="@+id/btn3"
-                    style="@style/Widget.Calculator.Button.Number"
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1"
-                    android:text="@string/button_three" />
-
-            <Button
-                    android:id="@+id/btnAdd"
-                    style="@style/Widget.Calculator.Button.Operation"
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1"
-                    android:text="@string/button_add" />
-        </LinearLayout>
-
-        <!-- Row 5: 0, ., = -->
-        <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="1"
-                android:orientation="horizontal">
-
-            <Button
-                    android:id="@+id/btn0"
-                    style="@style/Widget.Calculator.Button.Number"
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="2"
-                    android:text="@string/button_zero"
-                    tools:ignore="NestedWeights"/>
-
-            <Button
-                    android:id="@+id/btnDecimal"
-                    style="@style/Widget.Calculator.Button.Number"
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1"
-                    android:text="@string/button_decimal" />
-
-            <Button
-                    android:id="@+id/btnEquals"
-                    style="@style/Widget.Calculator.Button.Equals"
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1"
-                    android:text="@string/button_equals" />
         </LinearLayout>
 
     </LinearLayout>
