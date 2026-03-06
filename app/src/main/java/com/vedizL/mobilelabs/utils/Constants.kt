@@ -2,7 +2,7 @@ package com.vedizL.mobilelabs.utils
 
 object Constants {
     // Calculator constants
-    const val MAX_INPUT_LENGTH = 10
+    const val MAX_INPUT_LENGTH = 23
     const val ERROR_MESSAGE = "Error"
     const val ERROR_DISPLAY_TIME = 1500L
     const val INITIAL_DISPLAY_VALUE = "0"

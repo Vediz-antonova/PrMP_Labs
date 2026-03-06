@@ -1,6 +1,9 @@
 package com.vedizL.mobilelabs
 
 import android.content.Intent
+import android.app.Activity
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -23,6 +26,8 @@ import com.vedizL.mobilelabs.data.preferences.ThemePreferences
 import com.vedizL.mobilelabs.data.theme.ThemeRepository
 import com.vedizL.mobilelabs.model.Calculator
 import com.vedizL.mobilelabs.ui.settings.SettingsActivity
+import com.vedizL.mobilelabs.data.history.ActionEvent
+import com.vedizL.mobilelabs.data.history.ActionHistoryStore
 import com.vedizL.mobilelabs.ui.theme.ThemeManager
 import com.vedizL.mobilelabs.utils.Constants
 import com.vedizL.mobilelabs.utils.GestureController
@@ -39,6 +44,7 @@ class MainActivity : AppCompatActivity() {
     private var isAdvancedVisible = false
     private val themeRepo = ThemeRepository()
     private var themeListener: ListenerRegistration? = null
+    private lateinit var historyLauncher: ActivityResultLauncher<Intent>
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -79,7 +85,23 @@ class MainActivity : AppCompatActivity() {
 
         updateDisplay()
 
+        // Prepare history launcher
+        historyLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode == Activity.RESULT_OK) {
+                val data = result.data
+                val value = data?.getStringExtra("selected_value")
+                if (!value.isNullOrEmpty()) {
+                    calculator.setCurrentInput(value)
+                    updateDisplay()
+                }
+            }
+        }
         startThemeListener()
+    }
+
+    private fun logEvent(type: String, details: String) {
+        val e = ActionEvent(System.currentTimeMillis(), type, details)
+        ActionHistoryStore.log(this, e)
     }
 
     private fun startThemeListener() {
@@ -153,6 +175,12 @@ class MainActivity : AppCompatActivity() {
             }
             R.id.action_settings -> {
                 startActivity(Intent(this, SettingsActivity::class.java))
+                true
+            }
+            R.id.action_history -> {
+                // Open history screen for selection from history
+                val intent = android.content.Intent(this, com.vedizL.mobilelabs.ui.history.HistoryActivity::class.java)
+                historyLauncher.launch(intent)
                 true
             }
             else -> super.onOptionsItemSelected(item)
@@ -260,7 +288,9 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun onNumberClick(number: String) {
-        if (calculator.inputDigit(number)) updateDisplay()
+        if (calculator.inputDigit(number)) {
+            updateDisplay()
+        }
         else if (calculator.isErrorState) {
             Handler(Looper.getMainLooper()).postDelayed({
                 calculator.clear()
@@ -270,25 +300,35 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun onDecimalClick() {
-        if (calculator.inputDecimal()) updateDisplay()
+        if (calculator.inputDecimal()) {
+            updateDisplay()
+        }
     }
 
     private fun onOperationClick(operation: String) {
-        if (calculator.performOperation(operation)) updateDisplay()
+        if (calculator.performOperation(operation)) {
+            updateDisplay()
+        }
         else if (calculator.isErrorState) showErrorState()
     }
 
     private fun onPercentClick() {
-        if (calculator.applyPercent()) updateDisplay()
+        if (calculator.applyPercent()) {
+            updateDisplay()
+        }
     }
 
     private fun onSqrtClick() {
-        if (calculator.applySquareRoot()) updateDisplay()
+        if (calculator.applySquareRoot()) {
+            updateDisplay()
+        }
         else if (calculator.isErrorState) showErrorState()
     }
 
     private fun onSquareClick() {
-        if (calculator.applySquare()) updateDisplay()
+        if (calculator.applySquare()) {
+            updateDisplay()
+        }
         else if (calculator.isErrorState) showErrorState()
     }
 
@@ -302,7 +342,9 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun onFactorialClick() {
-        if (calculator.applyFactorial()) updateDisplay()
+        if (calculator.applyFactorial()) {
+            updateDisplay()
+        }
         else if (calculator.isErrorState) showErrorState()
     }
 
@@ -312,12 +354,22 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun onPlusMinusClick() {
-        if (calculator.negate()) updateDisplay()
+        if (calculator.negate()) {
+            updateDisplay()
+            logEvent("negate", calculator.currentInput)
+        }
     }
 
     private fun onEqualsClick() {
-        if (calculator.calculateResult()) updateDisplay()
-        else if (calculator.isErrorState) showErrorState()
+        // Prepare for logging full expression upon equals
+        calculator.finalizeExpressionBeforeEquals()
+        val logExpr = calculator.getExpressionLog()
+        if (calculator.calculateResult()) {
+            updateDisplay()
+            val finalRes = calculator.currentInput
+            logEvent("equals", "$logExpr=$finalRes")
+            calculator.resetExpressionLog()
+        } else if (calculator.isErrorState) showErrorState()
     }
 
     private fun updateDisplay() {

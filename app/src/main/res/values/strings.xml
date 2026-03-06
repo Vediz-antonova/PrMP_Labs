@@ -38,6 +38,8 @@
     <string name="hint_gestures">Swipe ← delete, → clear, long press clear all, double tap copy</string>
     <string name="theme">Theme</string>
     <string name="settings">Settings</string>
+    <string name="history">История</string>
+    <string name="history_empty">История пуста</string>
     <string name="button_color">Button color</string>
     <string name="display_background">Display background</string>
     <string name="display_text_color">Display text color</string>

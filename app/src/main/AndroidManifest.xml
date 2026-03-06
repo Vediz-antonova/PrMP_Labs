@@ -25,6 +25,7 @@
                 android:exported="false"/>
 
         <activity android:name=".ui.settings.SettingsActivity" />
+        <activity android:name=".ui.history.HistoryActivity" />
     </application>
 
 </manifest>

@@ -15,6 +15,9 @@ class Calculator {
     private var currentOperation: String? = null
     private var shouldResetInput: Boolean = false
     private var pendingOperation: String? = null
+    private var lastExpression: String? = null
+    // Log of the full expression tokens before '=' for logging on equals
+    private var expressionLog: String = ""
 
     // Number input
     fun inputDigit(digit: String): Boolean {
@@ -69,13 +72,14 @@ class Calculator {
             return false
         }
 
-        // If we already have an operation and input should be reset, just change the operation
-        if (previousInput != null && currentOperation != null && shouldResetInput) {
-            currentOperation = operation
-            return true
+        // Build expression logging tokens
+        if (expressionLog.isEmpty()) {
+            expressionLog = "$currentInput$operation"
+        } else {
+            expressionLog += "$currentInput$operation"
         }
 
-        // Calculate previous operation if exists
+        // If there is a pending calculation, evaluate it before chaining
         if (previousInput != null && currentOperation != null) {
             if (!calculateResult()) {
                 return false
@@ -109,6 +113,7 @@ class Calculator {
         val result = when (currentOperation) {
             Constants.OP_ADD -> {
                 val res = prev + current
+                rememberExpression(previousInput, currentOperation, currentInput, res)
                 if (res.isInfinite() || res.isNaN()) {
                     showError("Overflow")
                     return false
@@ -117,6 +122,7 @@ class Calculator {
             }
             Constants.OP_SUBTRACT -> {
                 val res = prev - current
+                rememberExpression(previousInput, currentOperation, currentInput, res)
                 if (res.isInfinite() || res.isNaN()) {
                     showError("Overflow")
                     return false
@@ -125,6 +131,7 @@ class Calculator {
             }
             Constants.OP_MULTIPLY -> {
                 val res = prev * current
+                rememberExpression(previousInput, currentOperation, currentInput, res)
                 if (res.isInfinite() || res.isNaN()) {
                     showError("Overflow")
                     return false
@@ -136,7 +143,9 @@ class Calculator {
                     showError("Error")
                     return false
                 }
-                prev / current
+                val res = prev / current
+                rememberExpression(previousInput, currentOperation, currentInput, res)
+                res
             }
             else -> return false
         }
@@ -145,11 +154,13 @@ class Calculator {
         previousInput = null
         currentOperation = null
         shouldResetInput = false
+        // lastExpression is already set inside rememberExpression
         return true
     }
 
     private fun calculatePendingOperation(): Boolean {
         val value = previousInput!!.toDoubleOrNull() ?: return false
+        val opSymbol = pendingOperation
 
         val result = when (pendingOperation) {
             Constants.OP_POWER -> {
@@ -182,7 +193,7 @@ class Calculator {
                     return false
                 }
                 val n = value.toLong()
-                if (n > 20) {
+                if (n > 25) {
                     showError("Overflow")
                     return false
                 }
@@ -195,12 +206,41 @@ class Calculator {
             else -> return false
         }
 
+        // remember expression for equals logging
+        rememberExpression(previousInput, opSymbol, currentInput, result)
         currentInput = formatNumber(result)
         pendingOperation = null
         previousInput = null
         shouldResetInput = false
         return true
     }
+
+    // Logging helpers for equals and loading from history
+    fun getExpressionLog(): String = expressionLog
+
+    fun resetExpressionLog() {
+        expressionLog = ""
+    }
+
+    fun finalizeExpressionBeforeEquals() {
+        // Ensure the last entered value is included in the expression log for logging purposes
+        expressionLog += currentInput
+    }
+
+    fun setCurrentInput(value: String) {
+        currentInput = value
+    }
+
+    // store the last expression like "12+5=17" for logging on equals
+    private fun rememberExpression(left: String?, op: String?, right: String?, result: Double) {
+        val formatted = formatNumber(result)
+        val l = left ?: ""
+        val r = if (op == Constants.OP_SQRT || op == Constants.OP_FACTORIAL) "" else (right ?: "")
+        val symbol = op ?: ""
+        lastExpression = if (r.isNotEmpty()) "$l$symbol$r=${formatted}" else "${l}${symbol}=${formatted}"
+    }
+
+    fun getLastExpression(): String? = lastExpression
 
     fun applyPercent(): Boolean {
         if (isErrorState) {
