@@ -34,6 +34,22 @@ class HistoryActivity : AppCompatActivity() {
         }
         rv.adapter = adapter
 
+        // If cloud history exists, load and replace local
+        ActionHistoryStore.loadCloud(this) { cloudItems ->
+            if (cloudItems.isNotEmpty()) {
+                runOnUiThread {
+                    adapter.submitList(cloudItems)
+                    if (cloudItems.isEmpty()) {
+                        tvEmpty.visibility = View.VISIBLE
+                        rv.visibility = View.GONE
+                    } else {
+                        tvEmpty.visibility = View.GONE
+                        rv.visibility = View.VISIBLE
+                    }
+                }
+            }
+        }
+
         if (items.isEmpty()) {
             tvEmpty.visibility = View.VISIBLE
             rv.visibility = View.GONE

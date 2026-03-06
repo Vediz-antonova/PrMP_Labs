@@ -105,7 +105,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun startThemeListener() {
-        val uid = FirebaseAuth.getInstance().currentUser?.uid ?: return
+        val uid = FirebaseAuth.getInstance().currentUser?.uid ?: "anonymous"
 
         themeListener = FirebaseFirestore.getInstance()
             .collection("users")
