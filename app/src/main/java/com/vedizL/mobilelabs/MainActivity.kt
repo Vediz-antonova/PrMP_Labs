@@ -36,6 +36,7 @@ import com.vedizL.mobilelabs.utils.GestureController
 import com.vedizL.mobilelabs.utils.NetworkReceiver
 import com.vedizL.mobilelabs.utils.NotificationHelper
 import com.vedizL.mobilelabs.data.auth.AuthManager
+import com.vedizL.mobilelabs.data.auth.BiometricAuthManager
 import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
@@ -59,6 +60,7 @@ class MainActivity : AppCompatActivity() {
         ThemeManager.applyDefaultTheme(prefs.getThemeMode())
 
         NotificationHelper.init(this)
+        BiometricAuthManager.init(this)
 
         setContentView(R.layout.activity_main)
 
@@ -209,8 +211,7 @@ class MainActivity : AppCompatActivity() {
                 true
             }
             R.id.action_history -> {
-                val intent = Intent(this, com.vedizL.mobilelabs.ui.history.HistoryActivity::class.java)
-                historyLauncher.launch(intent)
+                openHistory()
                 true
             }
             R.id.action_password_settings -> {
@@ -228,6 +229,11 @@ class MainActivity : AppCompatActivity() {
             }
             else -> super.onOptionsItemSelected(item)
         }
+    }
+
+    private fun openHistory() {
+        val intent = Intent(this, com.vedizL.mobilelabs.ui.history.HistoryActivity::class.java)
+        historyLauncher.launch(intent)
     }
 
     private fun showChangePasswordDialog() {
@@ -282,7 +288,7 @@ class MainActivity : AppCompatActivity() {
         user.reauthenticate(credential)
             .addOnCompleteListener { reauthTask ->
                 if (!reauthTask.isSuccessful) {
-                    Toast.makeText(this, "Current password is incorrect", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, "Incorrect current password", Toast.LENGTH_SHORT).show()
                     return@addOnCompleteListener
                 }
 
@@ -290,6 +296,11 @@ class MainActivity : AppCompatActivity() {
                     .addOnCompleteListener { updateTask ->
                         if (updateTask.isSuccessful) {
                             Toast.makeText(this, "Password changed successfully", Toast.LENGTH_SHORT).show()
+
+                            if (BiometricAuthManager.isBiometricEnabledForEmail(email)) {
+                                val newToken = BiometricAuthManager.generateBiometricToken()
+                                BiometricAuthManager.saveBiometricToken(email, newToken)
+                            }
                         } else {
                             Toast.makeText(this, "Failed to change password: ${updateTask.exception?.message}", Toast.LENGTH_SHORT).show()
                         }
@@ -374,7 +385,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun toggleAdvancedPanel() {
         isAdvancedVisible = !isAdvancedVisible
-        
+
         if (isAdvancedVisible) {
             contentContainer.weightSum = 7f
             advancedRow.layoutParams = (advancedRow.layoutParams as LinearLayout.LayoutParams).apply {
@@ -410,7 +421,7 @@ class MainActivity : AppCompatActivity() {
         • Double tap — copy result
 
         Try it out!
-    """.trimIndent()
+        """.trimIndent()
 
         AlertDialog.Builder(this)
             .setTitle("Gesture Tutorial")

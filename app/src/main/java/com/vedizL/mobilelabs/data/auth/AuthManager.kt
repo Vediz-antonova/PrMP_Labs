@@ -3,9 +3,8 @@ package com.vedizL.mobilelabs.data.auth
 import android.content.Context
 import android.content.SharedPreferences
 import androidx.security.crypto.EncryptedSharedPreferences
-import com.google.firebase.auth.FirebaseAuth
-import androidx.core.content.edit
 import androidx.security.crypto.MasterKeys
+import androidx.core.content.edit
 
 object AuthManager {
     private const val PREFS_NAME = "secure_auth_prefs"
@@ -63,7 +62,6 @@ object AuthManager {
     }
 
     fun logout() {
-        FirebaseAuth.getInstance().signOut()
         getPrefs().edit { clear() }
         setAnonymousMode(true)
     }

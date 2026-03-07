@@ -80,17 +80,30 @@
             app:layout_constraintTop_toBottomOf="@id/tvForgotPassword" />
 
     <Button
+            android:id="@+id/btnBiometricLogin"
+            android:layout_width="0dp"
+            android:layout_height="56dp"
+            android:layout_marginTop="12dp"
+            android:backgroundTint="@color/button_number_bg"
+            android:text="@string/login_with_fingerprint"
+            android:textColor="@color/button_number_text"
+            android:textSize="16sp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/btnLogin" />
+
+    <Button
             android:id="@+id/btnGuestLogin"
             android:layout_width="0dp"
             android:layout_height="56dp"
-            android:layout_marginTop="16dp"
+            android:layout_marginTop="12dp"
             android:backgroundTint="@color/button_number_bg"
             android:text="@string/continue_as_guest"
             android:textColor="@color/button_number_text"
             android:textSize="16sp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/btnLogin" />
+            app:layout_constraintTop_toBottomOf="@id/btnBiometricLogin" />
 
     <TextView
             android:id="@+id/tvRegister"

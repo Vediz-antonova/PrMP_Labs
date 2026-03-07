@@ -108,4 +108,49 @@
     <string name="success_registration">Registration successful!</string>
     <string name="success_logout">Logged out. Now in anonymous mode.</string>
     <string name="changing_password">Changing password…</string>
+
+    <!-- ===== Biometric Authentication ===== -->
+    <string name="biometric_login">Login with Fingerprint</string>
+    <string name="biometric_enable_title">Enable Biometric Login</string>
+    <string name="biometric_enable_message">You\'ll need to verify your identity to enable fingerprint login for %1$s</string>
+    <string name="biometric_verify_title">Verify Identity</string>
+    <string name="biometric_verify_message">Authenticate to enable biometric login</string>
+    <string name="biometric_verify_description">Place your finger on the sensor</string>
+    <string name="biometric_login_title">Login with Biometric</string>
+    <string name="biometric_login_message">Verify your identity for %1$s</string>
+    <string name="biometric_login_description">Use your fingerprint or face recognition</string>
+    <string name="biometric_enabled">Biometric login enabled for %1$s</string>
+    <string name="biometric_disabled">Biometric login disabled</string>
+    <string name="biometric_not_available">Biometric hardware not available</string>
+    <string name="biometric_login_required">Login to enable biometric authentication</string>
+    <string name="biometric_token_invalid">Biometric token invalid. Please login with password.</string>
+    <string name="biometric_enabled_success">Biometric login enabled successfully!</string>
+    <string name="biometric_enable_failed">Failed to enable biometric: %1$s</string>
+    <string name="biometric_auth_failed">Authentication failed: %1$s</string>
+    <string name="biometric_login_success">Biometric login successful!</string>
+    <string name="biometric_disable_title">Disable Biometric Login</string>
+    <string name="biometric_disable_message">Are you sure you want to disable fingerprint login for %1$s?</string>
+    <string name="biometric_note">Note: Biometric authentication allows you to login with your fingerprint instead of password. Once enabled, you\'ll be prompted automatically when opening the app.</string>
+    <string name="login_with_fingerprint">Login with Fingerprint</string>
+
+    <!-- ===== Common ===== -->
+    <string name="ok">OK</string>
+    <string name="cancel">Cancel</string>
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
+    <string name="save">Save</string>
+    <string name="delete">Delete</string>
+    <string name="edit">Edit</string>
+    <string name="close">Close</string>
+    <string name="back">Back</string>
+    <string name="next">Next</string>
+    <string name="done">Done</string>
+    <string name="loading">Loading…</string>
+    <string name="error">Error</string>
+    <string name="success">Success</string>
+    <string name="warning">Warning</string>
+    <string name="info">Info</string>
+    <string name="checking_availability">Checking availability...</string>
+    <string name="biometric_authentication">Biometric Authentication</string>
+    <string name="security">Security</string>
 </resources>

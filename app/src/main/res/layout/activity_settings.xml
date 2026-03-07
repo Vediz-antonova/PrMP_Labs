@@ -1,32 +1,120 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-              android:orientation="vertical"
-              android:padding="24dp"
-              android:layout_width="match_parent"
-              android:layout_height="match_parent">
-
-    <Button
-            android:id="@+id/btnPrimaryColor"
-            android:text="@string/primary_color"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+            xmlns:tools="http://schemas.android.com/tools"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"/>
+            android:layout_height="match_parent"
+            android:background="@color/calculator_background">
 
-    <Button
-            android:id="@+id/btnButtonColor"
-            android:text="@string/button_color"
+    <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"/>
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="24dp">
 
-    <Button
-            android:id="@+id/btnDisplayBg"
-            android:text="@string/display_background"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"/>
+        <!-- Theme Colors Section -->
+        <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/theme"
+                android:textSize="20sp"
+                android:textColor="@color/display_text"
+                android:textStyle="bold"
+                android:layout_marginBottom="16dp"/>
 
-    <Button
-            android:id="@+id/btnDisplayText"
-            android:text="@string/display_text_color"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"/>
+        <Button
+                android:id="@+id/btnPrimaryColor"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:layout_marginBottom="8dp"
+                android:text="@string/primary_color"
+                android:textAllCaps="false"/>
 
-</LinearLayout>
+        <Button
+                android:id="@+id/btnButtonColor"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:layout_marginBottom="8dp"
+                android:text="@string/button_color"
+                android:textAllCaps="false"/>
+
+        <Button
+                android:id="@+id/btnDisplayBg"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:layout_marginBottom="8dp"
+                android:text="@string/display_background"
+                android:textAllCaps="false"/>
+
+        <Button
+                android:id="@+id/btnDisplayText"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:layout_marginBottom="24dp"
+                android:text="@string/display_text_color"
+                android:textAllCaps="false"/>
+
+        <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="#DDDDDD"
+                android:layout_marginVertical="16dp"/>
+
+        <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/security"
+                android:textSize="20sp"
+                android:textColor="@color/display_text"
+                android:textStyle="bold"
+                android:layout_marginBottom="16dp"/>
+
+        <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:background="@drawable/input_background"
+                android:padding="16dp"
+                android:layout_marginBottom="16dp">
+
+            <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/biometric_authentication"
+                        android:textColor="@color/display_text"
+                        android:textSize="16sp"
+                        android:textStyle="bold"/>
+
+                <TextView
+                        android:id="@+id/tvBiometricStatus"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/checking_availability"
+                        android:textSize="12sp"
+                        android:layout_marginTop="4dp"/>
+
+            </LinearLayout>
+
+            <Switch
+                    android:id="@+id/switchBiometric"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    tools:ignore="UseSwitchCompatOrMaterialXml"/>
+        </LinearLayout>
+
+        <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/biometric_note"
+                android:textSize="12sp"
+                android:textColor="#FF888888"
+                android:lineSpacingExtra="4dp"
+                android:padding="8dp"/>
+    </LinearLayout>
+</ScrollView>
