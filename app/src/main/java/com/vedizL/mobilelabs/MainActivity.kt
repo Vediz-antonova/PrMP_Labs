@@ -10,14 +10,17 @@ import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.widget.Button
+import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import com.vedizL.mobilelabs.data.preferences.ThemeKeys
@@ -32,6 +35,7 @@ import com.vedizL.mobilelabs.utils.Constants
 import com.vedizL.mobilelabs.utils.GestureController
 import com.vedizL.mobilelabs.utils.NetworkReceiver
 import com.vedizL.mobilelabs.utils.NotificationHelper
+import com.vedizL.mobilelabs.data.auth.AuthManager
 import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
@@ -115,7 +119,11 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun startThemeListener() {
-        val uid = FirebaseAuth.getInstance().currentUser?.uid ?: "anonymous"
+        if (AuthManager.isAnonymous()) {
+            return
+        }
+
+        val uid = AuthManager.getUserId()
 
         themeListener = FirebaseFirestore.getInstance()
             .collection("users")
@@ -150,7 +158,7 @@ class MainActivity : AppCompatActivity() {
         super.onResume()
         ThemeManager.applyCustomColors(this)
 
-        if (prefs.isCustomThemeEnabled()) {
+        if (prefs.isCustomThemeEnabled() && !AuthManager.isAnonymous()) {
             lifecycleScope.launch {
                 themeRepo.saveTheme(
                     mapOf(
@@ -175,6 +183,18 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         menuInflater.inflate(R.menu.menu_main, menu)
+
+        val passwordItem = menu.findItem(R.id.action_password_settings)
+        val logoutItem = menu.findItem(R.id.action_logout)
+
+        if (AuthManager.isAnonymous()) {
+            passwordItem?.title = "Login"
+            logoutItem?.isVisible = false
+        } else {
+            passwordItem?.title = "Change Password"
+            logoutItem?.isVisible = true
+        }
+
         return true
     }
 
@@ -189,13 +209,106 @@ class MainActivity : AppCompatActivity() {
                 true
             }
             R.id.action_history -> {
-                // Open history screen for selection from history
                 val intent = Intent(this, com.vedizL.mobilelabs.ui.history.HistoryActivity::class.java)
                 historyLauncher.launch(intent)
                 true
             }
+            R.id.action_password_settings -> {
+                if (AuthManager.isAnonymous()) {
+                    startActivity(Intent(this, LoginActivity::class.java))
+                    finish()
+                } else {
+                    showChangePasswordDialog()
+                }
+                true
+            }
+            R.id.action_logout -> {
+                showLogoutConfirmation()
+                true
+            }
             else -> super.onOptionsItemSelected(item)
         }
+    }
+
+    private fun showChangePasswordDialog() {
+        val dialogView = layoutInflater.inflate(R.layout.dialog_change_password, null)
+        val etOldPassword = dialogView.findViewById<EditText>(R.id.etOldPassword)
+        val etNewPassword = dialogView.findViewById<EditText>(R.id.etNewPassword)
+        val etConfirmPassword = dialogView.findViewById<EditText>(R.id.etConfirmPassword)
+
+        AlertDialog.Builder(this)
+            .setTitle("Change Password")
+            .setView(dialogView)
+            .setPositiveButton("Change") { _, _ ->
+                val oldPassword = etOldPassword.text.toString()
+                val newPassword = etNewPassword.text.toString()
+                val confirmPassword = etConfirmPassword.text.toString()
+
+                if (oldPassword.isEmpty() || newPassword.isEmpty() || confirmPassword.isEmpty()) {
+                    Toast.makeText(this, "Please fill in all fields", Toast.LENGTH_SHORT).show()
+                    return@setPositiveButton
+                }
+
+                if (newPassword.length < 6) {
+                    Toast.makeText(this, "Password must be at least 6 characters", Toast.LENGTH_SHORT).show()
+                    return@setPositiveButton
+                }
+
+                if (newPassword != confirmPassword) {
+                    Toast.makeText(this, "New passwords do not match", Toast.LENGTH_SHORT).show()
+                    return@setPositiveButton
+                }
+
+                Toast.makeText(this, "Changing password...", Toast.LENGTH_SHORT).show()
+                changePassword(oldPassword, newPassword)
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    private fun changePassword(oldPassword: String, newPassword: String) {
+        val user = FirebaseAuth.getInstance().currentUser ?: run {
+            Toast.makeText(this, "User not logged in", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val email = user.email ?: run {
+            Toast.makeText(this, "Email not found", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val credential = EmailAuthProvider.getCredential(email, oldPassword)
+
+        user.reauthenticate(credential)
+            .addOnCompleteListener { reauthTask ->
+                if (!reauthTask.isSuccessful) {
+                    Toast.makeText(this, "Current password is incorrect", Toast.LENGTH_SHORT).show()
+                    return@addOnCompleteListener
+                }
+
+                user.updatePassword(newPassword)
+                    .addOnCompleteListener { updateTask ->
+                        if (updateTask.isSuccessful) {
+                            Toast.makeText(this, "Password changed successfully", Toast.LENGTH_SHORT).show()
+                        } else {
+                            Toast.makeText(this, "Failed to change password: ${updateTask.exception?.message}", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+            }
+    }
+
+    private fun showLogoutConfirmation() {
+        AlertDialog.Builder(this)
+            .setTitle("Logout")
+            .setMessage("Logging out will make you anonymous. All data will be stored locally.")
+            .setPositiveButton("Logout") { _, _ ->
+                AuthManager.logout()
+                Toast.makeText(this, "Logged out. Now in anonymous mode.", Toast.LENGTH_SHORT).show()
+                invalidateOptionsMenu()
+                recreate()
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
     }
 
     private fun toggleTheme() {
@@ -205,14 +318,16 @@ class MainActivity : AppCompatActivity() {
         prefs.saveThemeMode(newMode)
         prefs.setCustomThemeEnabled(false)
 
-        lifecycleScope.launch {
-            themeRepo.saveTheme(
-                mapOf(
-                    "mode" to newMode,
-                    "custom_enabled" to false,
-                    "source" to "default"
+        if (!AuthManager.isAnonymous()) {
+            lifecycleScope.launch {
+                themeRepo.saveTheme(
+                    mapOf(
+                        "mode" to newMode,
+                        "custom_enabled" to false,
+                        "source" to "default"
+                    )
                 )
-            )
+            }
         }
 
         NotificationHelper.send(
@@ -297,7 +412,7 @@ class MainActivity : AppCompatActivity() {
         Try it out!
     """.trimIndent()
 
-        android.app.AlertDialog.Builder(this)
+        AlertDialog.Builder(this)
             .setTitle("Gesture Tutorial")
             .setMessage(message)
             .setPositiveButton("Got it!") { dialog, _ -> dialog.dismiss() }

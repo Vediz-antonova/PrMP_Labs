@@ -1,26 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Calculator strings -->
+    <!-- ===== App Identity ===== -->
     <string name="app_name">Calculator</string>
+
+    <!-- ===== Calculator Display ===== -->
     <string name="initial_display_value">0</string>
 
-    <!-- Button labels -->
-    <string name="button_clear">AC</string>
-    <string name="button_plus_minus">+/-</string>
-    <string name="button_percent">%</string>
-    <string name="button_divide">÷</string>
-    <string name="button_multiply">×</string>
-    <string name="button_subtract">-</string>
-    <string name="button_add">+</string>
-    <string name="button_equals">=</string>
-    <string name="button_decimal">.</string>
-    <string name="button_expand">…</string>
-    <string name="button_square">^2</string>
-    <string name="button_power">^y</string>
-    <string name="button_sqrt">√</string>
-    <string name="button_factorial">n!</string>
-
-    <!-- Number buttons -->
+    <!-- ===== Basic Calculator Buttons ===== -->
+    <!-- Numbers -->
     <string name="button_zero">0</string>
     <string name="button_one">1</string>
     <string name="button_two">2</string>
@@ -32,16 +19,93 @@
     <string name="button_eight">8</string>
     <string name="button_nine">9</string>
 
+    <!-- Basic Operations -->
+    <string name="button_clear">AC</string>
+    <string name="button_plus_minus">+/-</string>
+    <string name="button_percent">%</string>
+    <string name="button_divide">÷</string>
+    <string name="button_multiply">×</string>
+    <string name="button_subtract">-</string>
+    <string name="button_add">+</string>
+    <string name="button_equals">=</string>
+    <string name="button_decimal">.</string>
+
+    <!-- ===== Advanced Calculator Buttons ===== -->
+    <string name="button_expand">…</string>
+    <string name="button_square">x²</string>
+    <string name="button_power">xʸ</string>
+    <string name="button_sqrt">√</string>
+    <string name="button_factorial">n!</string>
+
+    <!-- ===== Toast Messages ===== -->
     <string name="toast_delete_digit">Last digit deleted</string>
     <string name="toast_clear_display">Display cleared</string>
     <string name="toast_copied">Result copied to clipboard</string>
     <string name="hint_gestures">Swipe ← delete, → clear, long press clear all, double tap copy</string>
+
+    <!-- ===== Menu Items ===== -->
     <string name="theme">Theme</string>
     <string name="settings">Settings</string>
     <string name="history">History</string>
-    <string name="history_empty">History is empty</string>
-    <string name="button_color">Button color</string>
-    <string name="display_background">Display background</string>
-    <string name="display_text_color">Display text color</string>
-    <string name="primary_color">Primary color</string>
+    <string name="password_settings">Password</string>
+    <string name="logout">Logout</string>
+
+    <!-- ===== History Screen ===== -->
+    <string name="history_empty">No calculation history yet</string>
+
+    <!-- ===== Theme Settings ===== -->
+    <string name="primary_color">Primary Color</string>
+    <string name="button_color">Button Color</string>
+    <string name="display_background">Display Background</string>
+    <string name="display_text_color">Display Text Color</string>
+
+    <!-- ===== Authentication ===== -->
+    <!-- Titles -->
+    <string name="login">Login</string>
+    <string name="register">Register</string>
+    <string name="set_password">Set Password</string>
+    <string name="change_password">Change Password</string>
+    <string name="forgot_password">Forgot password?</string>
+
+    <!-- Form Labels -->
+    <string name="email">Email</string>
+    <string name="password">Password</string>
+    <string name="current_password">Current password</string>
+    <string name="new_password">New password</string>
+    <string name="confirm_password">Confirm password</string>
+    <string name="confirm_new_password">Confirm new password</string>
+
+    <!-- Buttons -->
+    <string name="sign_in">Sign In</string>
+    <string name="register_action">Register</string>
+    <string name="save_password">Save Password</string>
+    <string name="unlock">Unlock</string>
+    <string name="continue_as_guest">Continue as Guest</string>
+    <string name="skip_continue_as_anonymous">Skip (continue as anonymous)</string>
+
+    <!-- Links -->
+    <string name="no_account_register">No account? Register</string>
+    <string name="already_have_account">Already have an account? Sign In</string>
+
+    <!-- Password Reset Dialog -->
+    <string name="reset_password_title">Reset Password</string>
+    <string name="reset_password_message">A password reset link will be sent to %1$s</string>
+    <string name="send_reset_link">Send Reset Link</string>
+    <string name="check_email_title">Check Your Email</string>
+    <string name="check_email_message">Password reset link has been sent to %1$s</string>
+
+    <!-- Logout Dialog -->
+    <string name="logout_title">Logout</string>
+    <string name="logout_message">Logging out will make you anonymous. All data will be stored locally.</string>
+
+    <!-- Validation Messages -->
+    <string name="error_fill_all_fields">Please fill in all fields</string>
+    <string name="error_passwords_do_not_match">Passwords do not match</string>
+    <string name="error_password_too_short">Password must be at least 6 characters</string>
+    <string name="error_incorrect_password">Incorrect current password</string>
+    <string name="error_email_required">Please enter your email first</string>
+    <string name="success_password_changed">Password changed successfully</string>
+    <string name="success_registration">Registration successful!</string>
+    <string name="success_logout">Logged out. Now in anonymous mode.</string>
+    <string name="changing_password">Changing password…</string>
 </resources>

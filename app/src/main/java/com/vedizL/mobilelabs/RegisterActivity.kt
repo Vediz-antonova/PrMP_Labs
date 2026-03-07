@@ -8,6 +8,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.google.firebase.auth.FirebaseAuth
+import com.vedizL.mobilelabs.data.auth.AuthManager
 
 class RegisterActivity : AppCompatActivity() {
     private lateinit var auth: FirebaseAuth
@@ -55,6 +56,8 @@ class RegisterActivity : AppCompatActivity() {
                 .addOnCompleteListener { task ->
                     btnRegister.isEnabled = true
                     if (task.isSuccessful) {
+                        AuthManager.setUserLoggedIn(email)
+
                         Toast.makeText(this, "Registration successful!", Toast.LENGTH_SHORT).show()
                         val intent = Intent(this, MainActivity::class.java)
                         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK

@@ -1,7 +1,6 @@
 package com.vedizL.mobilelabs.data.history
 
 import android.content.Context
-import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -9,13 +8,15 @@ import java.util.Locale
 import com.google.firebase.firestore.Query
 import org.json.JSONArray
 import org.json.JSONObject
+import com.vedizL.mobilelabs.data.auth.AuthManager
+import androidx.core.content.edit
 
 object ActionHistoryStore {
     private const val PREFS_NAME = "mobilelabs_prefs"
     private const val KEY_HISTORY = "action_history"
     private const val MAX_ITEMS = 200
-    // simple counter to help generate unique doc IDs per timestamp
     private var cloudDocCounter: Long = 0L
+
     private fun generateHistoryDocId(timestamp: Long): String {
         val datePart = SimpleDateFormat("yyyyMMdd_HHmmss_SSS", Locale.US).format(Date(timestamp))
         val suffix = cloudDocCounter++
@@ -35,7 +36,6 @@ object ActionHistoryStore {
         obj.put("type", event.type)
         obj.put("details", event.details)
         jsonArray.put(obj)
-        // prune to keep history bounded
         val trimmed = if (jsonArray.length() > MAX_ITEMS) {
             val start = jsonArray.length() - MAX_ITEMS
             val newArr = JSONArray()
@@ -44,19 +44,21 @@ object ActionHistoryStore {
             }
             newArr
         } else jsonArray
-        prefs.edit().putString(KEY_HISTORY, trimmed.toString()).apply()
+        prefs.edit { putString(KEY_HISTORY, trimmed.toString()) }
 
-        // Also push to cloud (use anonymous uid if not signed in)
-        val uid = FirebaseAuth.getInstance().currentUser?.uid ?: "anonymous"
-        val cloudRef = FirebaseFirestore.getInstance()
-            .collection("users").document(uid).collection("history")
-        val payload = hashMapOf(
-            "timestamp" to event.timestamp,
-            "type" to event.type,
-            "details" to event.details
-        )
-        val docId = generateHistoryDocId(event.timestamp)
-        cloudRef.document(docId).set(payload)
+        if (!AuthManager.isAnonymous()) {
+            val userId = AuthManager.getUserId()
+            val cloudRef = FirebaseFirestore.getInstance()
+                .collection("users").document(userId).collection("history")
+            val payload = hashMapOf(
+                "timestamp" to event.timestamp,
+                "type" to event.type,
+                "details" to event.details,
+                "email" to AuthManager.getUserEmail()
+            )
+            val docId = generateHistoryDocId(event.timestamp)
+            cloudRef.document(docId).set(payload)
+        }
     }
 
     fun load(context: Context): List<ActionEvent> {
@@ -77,12 +79,15 @@ object ActionHistoryStore {
         return list.sortedBy { it.timestamp }
     }
 
-    // Load cloud history (latest 20) for the current user
     fun loadCloud(context: Context, callback: (List<ActionEvent>) -> Unit) {
-        val uid = FirebaseAuth.getInstance().currentUser?.uid ?: "anonymous"
-        // Cloud may be empty if user hasn't used history yet
+        if (AuthManager.isAnonymous()) {
+            callback(emptyList())
+            return
+        }
+
+        val userId = AuthManager.getUserId()
         val query = FirebaseFirestore.getInstance()
-            .collection("users").document(uid).collection("history")
+            .collection("users").document(userId).collection("history")
             .orderBy("timestamp", Query.Direction.DESCENDING)
             .limit(20)
         query.get()
