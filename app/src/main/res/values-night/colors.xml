@@ -21,4 +21,9 @@
 
     <!-- Error color -->
     <color name="error_red">#FF6666</color>
+
+    <!-- Input field colors -->
+    <color name="input_background">#2D2D2D</color>
+    <color name="input_text">#FFFFFF</color>
+    <color name="input_hint">#AAAAAA</color>
 </resources>
