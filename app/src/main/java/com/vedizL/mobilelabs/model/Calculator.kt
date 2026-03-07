@@ -2,6 +2,8 @@ package com.vedizL.mobilelabs.model
 
 import com.vedizL.mobilelabs.utils.Constants
 import java.util.Locale
+import kotlin.math.pow
+import kotlin.math.sqrt
 
 class Calculator {
     // Public state
@@ -154,7 +156,6 @@ class Calculator {
         previousInput = null
         currentOperation = null
         shouldResetInput = false
-        // lastExpression is already set inside rememberExpression
         return true
     }
 
@@ -165,7 +166,7 @@ class Calculator {
         val result = when (pendingOperation) {
             Constants.OP_POWER -> {
                 val exponent = currentInput.toDoubleOrNull() ?: return false
-                val res = Math.pow(value, exponent)
+                val res = value.pow(exponent)
                 if (res.isInfinite() || res.isNaN()) {
                     showError("Overflow")
                     return false
@@ -185,28 +186,28 @@ class Calculator {
                     showError("Invalid")
                     return false
                 }
-                Math.sqrt(value)
+                sqrt(value)
             }
             Constants.OP_FACTORIAL -> {
                 if (value < 0 || value != value.toLong().toDouble()) {
                     showError("Invalid")
                     return false
                 }
-                val n = value.toLong()
-                if (n > 25) {
+                val n = value.toInt()
+                if (n > 100) {
                     showError("Overflow")
                     return false
                 }
-                var fact = 1L
+
+                var fact = java.math.BigInteger.ONE
                 for (i in 2..n) {
-                    fact *= i
+                    fact = fact.multiply(java.math.BigInteger.valueOf(i.toLong()))
                 }
                 fact.toDouble()
             }
             else -> return false
         }
 
-        // remember expression for equals logging
         rememberExpression(previousInput, opSymbol, currentInput, result)
         currentInput = formatNumber(result)
         pendingOperation = null
@@ -215,7 +216,6 @@ class Calculator {
         return true
     }
 
-    // Logging helpers for equals and loading from history
     fun getExpressionLog(): String = expressionLog
 
     fun resetExpressionLog() {
@@ -223,7 +223,6 @@ class Calculator {
     }
 
     fun finalizeExpressionBeforeEquals() {
-        // Ensure the last entered value is included in the expression log for logging purposes
         expressionLog += currentInput
     }
 
@@ -231,7 +230,6 @@ class Calculator {
         currentInput = value
     }
 
-    // store the last expression like "12+5=17" for logging on equals
     private fun rememberExpression(left: String?, op: String?, right: String?, result: Double) {
         val formatted = formatNumber(result)
         val l = left ?: ""
@@ -239,8 +237,6 @@ class Calculator {
         val symbol = op ?: ""
         lastExpression = if (r.isNotEmpty()) "$l$symbol$r=${formatted}" else "${l}${symbol}=${formatted}"
     }
-
-    fun getLastExpression(): String? = lastExpression
 
     fun applyPercent(): Boolean {
         if (isErrorState) {
@@ -400,7 +396,7 @@ class Calculator {
         }
 
         // Format decimal number
-        var formatted = try {
+        val formatted = try {
             String.format(Locale.US, "%.10f", number)
                 .trimEnd('0')
                 .trimEnd('.')
@@ -409,13 +405,9 @@ class Calculator {
             return Constants.ERROR_MESSAGE
         }
 
-        // Limit length
         if (formatted.length > Constants.MAX_INPUT_LENGTH) {
-            formatted = formatted.substring(0, Constants.MAX_INPUT_LENGTH).trimEnd('.')
-
-            if (formatted.endsWith(".")) {
-                formatted = formatted.dropLast(1)
-            }
+            showError("Overflow")
+            return Constants.ERROR_MESSAGE
         }
 
         return formatted

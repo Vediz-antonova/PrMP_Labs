@@ -69,4 +69,5 @@ dependencies {
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
 
     implementation("com.github.yukuku:ambilwarna:2.0.1")
+
 }

@@ -1,7 +1,6 @@
 package com.vedizL.mobilelabs
 
 import android.content.Intent
-import android.app.Activity
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import android.os.Bundle
@@ -31,6 +30,8 @@ import com.vedizL.mobilelabs.data.history.ActionHistoryStore
 import com.vedizL.mobilelabs.ui.theme.ThemeManager
 import com.vedizL.mobilelabs.utils.Constants
 import com.vedizL.mobilelabs.utils.GestureController
+import com.vedizL.mobilelabs.utils.NetworkReceiver
+import com.vedizL.mobilelabs.utils.NotificationHelper
 import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
@@ -45,12 +46,15 @@ class MainActivity : AppCompatActivity() {
     private val themeRepo = ThemeRepository()
     private var themeListener: ListenerRegistration? = null
     private lateinit var historyLauncher: ActivityResultLauncher<Intent>
+    private lateinit var networkReceiver: NetworkReceiver
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         prefs = ThemePreferences(this)
         ThemeManager.applyDefaultTheme(prefs.getThemeMode())
+
+        NotificationHelper.init(this)
 
         setContentView(R.layout.activity_main)
 
@@ -78,6 +82,7 @@ class MainActivity : AppCompatActivity() {
 
         ThemeManager.applyCustomColors(this)
         setupButtonListeners()
+
         if (!prefs.isTutorialShown()) {
             showGestureTutorial()
             prefs.setTutorialShown()
@@ -85,9 +90,8 @@ class MainActivity : AppCompatActivity() {
 
         updateDisplay()
 
-        // Prepare history launcher
         historyLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-            if (result.resultCode == Activity.RESULT_OK) {
+            if (result.resultCode == RESULT_OK) {
                 val data = result.data
                 val value = data?.getStringExtra("selected_value")
                 if (!value.isNullOrEmpty()) {
@@ -96,7 +100,13 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
+
         startThemeListener()
+
+        networkReceiver = NetworkReceiver()
+        val filter = android.content.IntentFilter()
+        filter.addAction("android.net.conn.CONNECTIVITY_CHANGE")
+        registerReceiver(networkReceiver, filter)
     }
 
     private fun logEvent(type: String, details: String) {
@@ -159,6 +169,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         themeListener?.remove()
+        unregisterReceiver(networkReceiver)
         super.onDestroy()
     }
 
@@ -179,7 +190,7 @@ class MainActivity : AppCompatActivity() {
             }
             R.id.action_history -> {
                 // Open history screen for selection from history
-                val intent = android.content.Intent(this, com.vedizL.mobilelabs.ui.history.HistoryActivity::class.java)
+                val intent = Intent(this, com.vedizL.mobilelabs.ui.history.HistoryActivity::class.java)
                 historyLauncher.launch(intent)
                 true
             }
@@ -203,6 +214,13 @@ class MainActivity : AppCompatActivity() {
                 )
             )
         }
+
+        NotificationHelper.send(
+            this,
+            "Theme Changed",
+            if (newMode == "dark") "Dark theme enabled." else "Light theme enabled.",
+            2001
+        )
 
         ThemeManager.applyDefaultTheme(newMode)
         recreate()
@@ -361,15 +379,25 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun onEqualsClick() {
-        // Prepare for logging full expression upon equals
         calculator.finalizeExpressionBeforeEquals()
         val logExpr = calculator.getExpressionLog()
         if (calculator.calculateResult()) {
             updateDisplay()
             val finalRes = calculator.currentInput
+
             logEvent("equals", "$logExpr=$finalRes")
             calculator.resetExpressionLog()
-        } else if (calculator.isErrorState) showErrorState()
+
+            NotificationHelper.send(
+                this,
+                "History Added",
+                "$logExpr = $finalRes",
+                3001
+            )
+
+        } else if (calculator.isErrorState) {
+            showErrorState()
+        }
     }
 
     private fun updateDisplay() {
