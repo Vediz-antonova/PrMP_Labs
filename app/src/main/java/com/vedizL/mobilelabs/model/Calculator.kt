@@ -74,17 +74,17 @@ class Calculator {
             return false
         }
 
-        // Build expression logging tokens
-        if (expressionLog.isEmpty()) {
+        // If we're in "enter second number" mode (shouldResetInput is true),
+        // just change the operation without calculating - this allows operation reselection
+        // Only log the new operation, not the previous one
+        if (shouldResetInput && previousInput != null && currentOperation != null) {
             expressionLog = "$currentInput$operation"
         } else {
-            expressionLog += "$currentInput$operation"
-        }
-
-        // If there is a pending calculation, evaluate it before chaining
-        if (previousInput != null && currentOperation != null) {
-            if (!calculateResult()) {
-                return false
+            // Build expression logging tokens for new operations
+            if (expressionLog.isEmpty()) {
+                expressionLog = "$currentInput$operation"
+            } else {
+                expressionLog += "$currentInput$operation"
             }
         }
 
@@ -194,7 +194,7 @@ class Calculator {
                     return false
                 }
                 val n = value.toInt()
-                if (n > 100) {
+                if (n > 10000) {
                     showError("Overflow")
                     return false
                 }
@@ -203,7 +203,12 @@ class Calculator {
                 for (i in 2..n) {
                     fact = fact.multiply(java.math.BigInteger.valueOf(i.toLong()))
                 }
-                fact.toDouble()
+                currentInput = fact.toString()
+                rememberExpression(previousInput, opSymbol, currentInput, 0.0)
+                pendingOperation = null
+                previousInput = null
+                shouldResetInput = false
+                return true
             }
             else -> return false
         }

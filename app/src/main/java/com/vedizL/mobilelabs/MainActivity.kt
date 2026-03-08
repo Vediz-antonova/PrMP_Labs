@@ -1,6 +1,7 @@
 package com.vedizL.mobilelabs
 
 import android.content.Intent
+import android.os.Build
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import android.os.Bundle
@@ -52,6 +53,7 @@ class MainActivity : AppCompatActivity() {
     private var themeListener: ListenerRegistration? = null
     private lateinit var historyLauncher: ActivityResultLauncher<Intent>
     private lateinit var networkReceiver: NetworkReceiver
+    private lateinit var notificationPermissionLauncher: ActivityResultLauncher<String>
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -61,6 +63,16 @@ class MainActivity : AppCompatActivity() {
 
         NotificationHelper.init(this)
         BiometricAuthManager.init(this)
+
+        notificationPermissionLauncher = registerForActivityResult(
+            ActivityResultContracts.RequestPermission()
+        ) { isGranted ->
+            if (isGranted) {
+                Toast.makeText(this, "Notifications enabled", Toast.LENGTH_SHORT).show()
+            }
+        }
+
+        requestNotificationPermission()
 
         setContentView(R.layout.activity_main)
 
@@ -118,6 +130,15 @@ class MainActivity : AppCompatActivity() {
     private fun logEvent(type: String, details: String) {
         val e = ActionEvent(System.currentTimeMillis(), type, details)
         ActionHistoryStore.log(this, e)
+    }
+
+    private fun requestNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            val permission = android.Manifest.permission.POST_NOTIFICATIONS
+            if (checkSelfPermission(permission) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                notificationPermissionLauncher.launch(permission)
+            }
+        }
     }
 
     private fun startThemeListener() {
@@ -500,7 +521,6 @@ class MainActivity : AppCompatActivity() {
     private fun onPlusMinusClick() {
         if (calculator.negate()) {
             updateDisplay()
-            logEvent("negate", calculator.currentInput)
         }
     }
 
@@ -554,7 +574,8 @@ class MainActivity : AppCompatActivity() {
             previousInput = savedInstanceState.getString("previousInput"),
             currentOperation = savedInstanceState.getString("currentOperation"),
             shouldResetInput = savedInstanceState.getBoolean("shouldResetInput", false),
-            isErrorState = savedInstanceState.getBoolean("isErrorState", false)
+            isErrorState = savedInstanceState.getBoolean("isErrorState", false),
+            pendingOperation = savedInstanceState.getString("pendingOperation")
         )
         calculator.restoreState(state)
         isAdvancedVisible = savedInstanceState.getBoolean("isAdvancedVisible", false)
@@ -564,6 +585,13 @@ class MainActivity : AppCompatActivity() {
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
         outState.putBoolean("isAdvancedVisible", isAdvancedVisible)
+        val calcState = calculator.saveState()
+        outState.putString("currentInput", calcState.currentInput)
+        outState.putString("previousInput", calcState.previousInput)
+        outState.putString("currentOperation", calcState.currentOperation)
+        outState.putBoolean("shouldResetInput", calcState.shouldResetInput)
+        outState.putBoolean("isErrorState", calcState.isErrorState)
+        outState.putString("pendingOperation", calcState.pendingOperation)
     }
 
     override fun onConfigurationChanged(newConfig: android.content.res.Configuration) {
