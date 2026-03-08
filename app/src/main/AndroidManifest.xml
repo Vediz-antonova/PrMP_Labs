@@ -19,6 +19,7 @@
         <activity
                 android:name=".SplashActivity"
                 android:exported="true"
+                android:configChanges="uiMode"
                 android:theme="@style/Theme.MobileLabs">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -28,18 +29,25 @@
 
         <activity
                 android:name=".MainActivity"
-                android:exported="false"/>
+                android:exported="false"
+                android:configChanges="uiMode"/>
 
         <activity
                 android:name=".LoginActivity"
-                android:exported="false"/>
+                android:exported="false"
+                android:configChanges="uiMode"/>
 
         <activity
                 android:name=".RegisterActivity"
-                android:exported="false"/>
+                android:exported="false"
+                android:configChanges="uiMode"/>
 
-        <activity android:name=".ui.settings.SettingsActivity" />
-        <activity android:name=".ui.history.HistoryActivity" />
+        <activity 
+                android:name=".ui.settings.SettingsActivity"
+                android:configChanges="uiMode"/>
+        <activity 
+                android:name=".ui.history.HistoryActivity"
+                android:configChanges="uiMode"/>
 
         <receiver
                 android:name=".utils.NetworkReceiver"

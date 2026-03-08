@@ -1,6 +1,7 @@
 package com.vedizL.mobilelabs
 
 import android.content.Intent
+import android.content.res.Configuration
 import android.os.Build
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
@@ -17,6 +18,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.appbar.MaterialToolbar
@@ -59,7 +61,12 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
 
         prefs = ThemePreferences(this)
-        ThemeManager.applyDefaultTheme(prefs.getThemeMode())
+        
+        if (prefs.isFollowSystemTheme()) {
+            ThemeManager.applySystemTheme()
+        } else {
+            ThemeManager.applyDefaultTheme(prefs.getThemeMode())
+        }
 
         NotificationHelper.init(this)
         BiometricAuthManager.init(this)
@@ -179,6 +186,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
+        checkAndApplySystemTheme()
         ThemeManager.applyCustomColors(this)
 
         if (prefs.isCustomThemeEnabled() && !AuthManager.isAnonymous()) {
@@ -327,6 +335,29 @@ class MainActivity : AppCompatActivity() {
                         }
                     }
             }
+    }
+
+    private fun checkAndApplySystemTheme() {
+        if (prefs.isFollowSystemTheme()) {
+            val currentNightMode = resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK
+            val currentMode = when (currentNightMode) {
+                Configuration.UI_MODE_NIGHT_YES -> "dark"
+                Configuration.UI_MODE_NIGHT_NO -> "light"
+                else -> "light"
+            }
+            val savedMode = prefs.getThemeMode()
+            if (savedMode != currentMode && savedMode != "system") {
+                prefs.saveThemeMode(currentMode)
+                recreate()
+            }
+        }
+    }
+
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+        if (hasFocus) {
+            checkAndApplySystemTheme()
+        }
     }
 
     private fun showLogoutConfirmation() {
@@ -598,6 +629,10 @@ class MainActivity : AppCompatActivity() {
         super.onConfigurationChanged(newConfig)
         applyAdaptiveLayout(newConfig.orientation)
         advancedRow.visibility = if (isAdvancedVisible) View.VISIBLE else View.GONE
+        
+        if (prefs.isFollowSystemTheme()) {
+            ThemeManager.applySystemTheme()
+        }
     }
 
     private fun applyAdaptiveLayout(orientation: Int) {

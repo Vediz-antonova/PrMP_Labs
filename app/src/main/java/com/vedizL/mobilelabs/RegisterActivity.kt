@@ -1,6 +1,7 @@
 package com.vedizL.mobilelabs
 
 import android.content.Intent
+import android.content.res.Configuration
 import android.os.Bundle
 import android.widget.Button
 import android.widget.EditText
@@ -9,6 +10,8 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.google.firebase.auth.FirebaseAuth
 import com.vedizL.mobilelabs.data.auth.AuthManager
+import com.vedizL.mobilelabs.data.preferences.ThemePreferences
+import com.vedizL.mobilelabs.ui.theme.ThemeManager
 
 class RegisterActivity : AppCompatActivity() {
     private lateinit var auth: FirebaseAuth
@@ -20,6 +23,15 @@ class RegisterActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        
+        val prefs = ThemePreferences(this)
+        
+        if (prefs.isFollowSystemTheme()) {
+            ThemeManager.applySystemTheme()
+        } else {
+            ThemeManager.applyDefaultTheme(prefs.getThemeMode())
+        }
+        
         setContentView(R.layout.activity_register)
 
         etEmail = findViewById(R.id.etEmail)
@@ -71,6 +83,45 @@ class RegisterActivity : AppCompatActivity() {
 
         tvLogin.setOnClickListener {
             finish()
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        checkAndApplySystemTheme()
+    }
+
+    private fun checkAndApplySystemTheme() {
+        val prefs = ThemePreferences(this)
+        if (prefs.isFollowSystemTheme()) {
+            val currentNightMode = resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK
+            val currentMode = when (currentNightMode) {
+                Configuration.UI_MODE_NIGHT_YES -> "dark"
+                Configuration.UI_MODE_NIGHT_NO -> "light"
+                else -> "light"
+            }
+            val savedMode = prefs.getThemeMode()
+            if (savedMode != currentMode && savedMode != "system") {
+                prefs.saveThemeMode(currentMode)
+                recreate()
+            }
+        }
+    }
+
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+        if (hasFocus) {
+            checkAndApplySystemTheme()
+        }
+    }
+
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        val prefs = ThemePreferences(this)
+        if (prefs.isFollowSystemTheme()) {
+            ThemeManager.applySystemTheme()
+        } else {
+            ThemeManager.applyDefaultTheme(prefs.getThemeMode())
         }
     }
 }

@@ -11,6 +11,9 @@ import androidx.appcompat.app.AppCompatActivity
 import com.google.firebase.auth.FirebaseAuth
 import com.vedizL.mobilelabs.data.auth.AuthManager
 import com.vedizL.mobilelabs.data.auth.BiometricAuthManager
+import android.content.res.Configuration
+import com.vedizL.mobilelabs.data.preferences.ThemePreferences
+import com.vedizL.mobilelabs.ui.theme.ThemeManager
 
 class LoginActivity : AppCompatActivity() {
     private lateinit var auth: FirebaseAuth
@@ -24,6 +27,15 @@ class LoginActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        
+        val prefs = ThemePreferences(this)
+        
+        if (prefs.isFollowSystemTheme()) {
+            ThemeManager.applySystemTheme()
+        } else {
+            ThemeManager.applyDefaultTheme(prefs.getThemeMode())
+        }
+        
         setContentView(R.layout.activity_login)
 
         etEmail = findViewById(R.id.etEmail)
@@ -87,6 +99,35 @@ class LoginActivity : AppCompatActivity() {
 
         tvForgotPassword.setOnClickListener {
             showForgotPasswordDialog()
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        checkAndApplySystemTheme()
+    }
+
+    private fun checkAndApplySystemTheme() {
+        val prefs = ThemePreferences(this)
+        if (prefs.isFollowSystemTheme()) {
+            val currentNightMode = resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK
+            val currentMode = when (currentNightMode) {
+                Configuration.UI_MODE_NIGHT_YES -> "dark"
+                Configuration.UI_MODE_NIGHT_NO -> "light"
+                else -> "light"
+            }
+            val savedMode = prefs.getThemeMode()
+            if (savedMode != currentMode && savedMode != "system") {
+                prefs.saveThemeMode(currentMode)
+                recreate()
+            }
+        }
+    }
+
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+        if (hasFocus) {
+            checkAndApplySystemTheme()
         }
     }
 
@@ -208,5 +249,15 @@ class LoginActivity : AppCompatActivity() {
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         startActivity(intent)
         finish()
+    }
+
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        val prefs = ThemePreferences(this)
+        if (prefs.isFollowSystemTheme()) {
+            ThemeManager.applySystemTheme()
+        } else {
+            ThemeManager.applyDefaultTheme(prefs.getThemeMode())
+        }
     }
 }

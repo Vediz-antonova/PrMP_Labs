@@ -1,5 +1,6 @@
 package com.vedizL.mobilelabs.ui.settings
 
+import android.content.res.Configuration
 import android.graphics.Color
 import android.os.Bundle
 import android.widget.Button
@@ -13,6 +14,7 @@ import com.vedizL.mobilelabs.data.auth.AuthManager
 import com.vedizL.mobilelabs.data.auth.BiometricAuthManager
 import com.vedizL.mobilelabs.data.preferences.ThemeKeys
 import com.vedizL.mobilelabs.data.preferences.ThemePreferences
+import com.vedizL.mobilelabs.ui.theme.ThemeManager
 import yuku.ambilwarna.AmbilWarnaDialog
 
 class SettingsActivity : AppCompatActivity() {
@@ -23,9 +25,17 @@ class SettingsActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        
+        prefs = ThemePreferences(this)
+        
+        if (prefs.isFollowSystemTheme()) {
+            ThemeManager.applySystemTheme()
+        } else {
+            ThemeManager.applyDefaultTheme(prefs.getThemeMode())
+        }
+        
         setContentView(R.layout.activity_settings)
 
-        prefs = ThemePreferences(this)
         BiometricAuthManager.init(this)
 
         switchBiometric = findViewById(R.id.switchBiometric)
@@ -76,6 +86,35 @@ class SettingsActivity : AppCompatActivity() {
             }
         }
     }
+
+    override fun onResume() {
+        super.onResume()
+        checkAndApplySystemTheme()
+    }
+
+    private fun checkAndApplySystemTheme() {
+        if (prefs.isFollowSystemTheme()) {
+            val currentNightMode = resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK
+            val currentMode = when (currentNightMode) {
+                Configuration.UI_MODE_NIGHT_YES -> "dark"
+                Configuration.UI_MODE_NIGHT_NO -> "light"
+                else -> "light"
+            }
+            val savedMode = prefs.getThemeMode()
+            if (savedMode != currentMode && savedMode != "system") {
+                prefs.saveThemeMode(currentMode)
+                recreate()
+            }
+        }
+    }
+
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+        if (hasFocus) {
+            checkAndApplySystemTheme()
+        }
+    }
+
 
     private fun showEnableBiometricDialog(email: String) {
         AlertDialog.Builder(this)
@@ -142,5 +181,14 @@ class SettingsActivity : AppCompatActivity() {
         })
 
         dialog.show()
+    }
+
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        if (prefs.isFollowSystemTheme()) {
+            ThemeManager.applySystemTheme()
+        } else {
+            ThemeManager.applyDefaultTheme(prefs.getThemeMode())
+        }
     }
 }
