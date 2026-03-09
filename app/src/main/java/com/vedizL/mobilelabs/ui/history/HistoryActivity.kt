@@ -22,12 +22,7 @@ class HistoryActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         
         prefs = ThemePreferences(this)
-        
-        if (prefs.isFollowSystemTheme()) {
-            ThemeManager.applySystemTheme()
-        } else {
-            ThemeManager.applyDefaultTheme(prefs.getThemeMode())
-        }
+        ThemeManager.applyDefaultTheme(prefs.getThemeMode())
         
         setContentView(R.layout.activity_history)
 
@@ -73,40 +68,4 @@ class HistoryActivity : AppCompatActivity() {
         }
     }
 
-    override fun onResume() {
-        super.onResume()
-        checkAndApplySystemTheme()
-    }
-
-    private fun checkAndApplySystemTheme() {
-        if (prefs.isFollowSystemTheme()) {
-            val currentNightMode = resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK
-            val currentMode = when (currentNightMode) {
-                Configuration.UI_MODE_NIGHT_YES -> "dark"
-                Configuration.UI_MODE_NIGHT_NO -> "light"
-                else -> "light"
-            }
-            val savedMode = prefs.getThemeMode()
-            if (savedMode != currentMode && savedMode != "system") {
-                prefs.saveThemeMode(currentMode)
-                recreate()
-            }
-        }
-    }
-
-    override fun onWindowFocusChanged(hasFocus: Boolean) {
-        super.onWindowFocusChanged(hasFocus)
-        if (hasFocus) {
-            checkAndApplySystemTheme()
-        }
-    }
-
-    override fun onConfigurationChanged(newConfig: Configuration) {
-        super.onConfigurationChanged(newConfig)
-        if (prefs.isFollowSystemTheme()) {
-            ThemeManager.applySystemTheme()
-        } else {
-            ThemeManager.applyDefaultTheme(prefs.getThemeMode())
-        }
-    }
 }

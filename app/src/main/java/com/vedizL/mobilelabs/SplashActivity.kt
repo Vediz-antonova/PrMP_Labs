@@ -17,12 +17,7 @@ class SplashActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         
         val prefs = ThemePreferences(this)
-        
-        if (prefs.isFollowSystemTheme()) {
-            ThemeManager.applySystemTheme()
-        } else {
-            ThemeManager.applyDefaultTheme(prefs.getThemeMode())
-        }
+        ThemeManager.applyDefaultTheme(prefs.getThemeMode())
         
         setContentView(R.layout.activity_splash)
 

@@ -61,12 +61,7 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
 
         prefs = ThemePreferences(this)
-        
-        if (prefs.isFollowSystemTheme()) {
-            ThemeManager.applySystemTheme()
-        } else {
-            ThemeManager.applyDefaultTheme(prefs.getThemeMode())
-        }
+        ThemeManager.applyDefaultTheme(prefs.getThemeMode())
 
         NotificationHelper.init(this)
         BiometricAuthManager.init(this)
@@ -186,7 +181,6 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        checkAndApplySystemTheme()
         ThemeManager.applyCustomColors(this)
 
         if (prefs.isCustomThemeEnabled() && !AuthManager.isAnonymous()) {
@@ -335,29 +329,6 @@ class MainActivity : AppCompatActivity() {
                         }
                     }
             }
-    }
-
-    private fun checkAndApplySystemTheme() {
-        if (prefs.isFollowSystemTheme()) {
-            val currentNightMode = resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK
-            val currentMode = when (currentNightMode) {
-                Configuration.UI_MODE_NIGHT_YES -> "dark"
-                Configuration.UI_MODE_NIGHT_NO -> "light"
-                else -> "light"
-            }
-            val savedMode = prefs.getThemeMode()
-            if (savedMode != currentMode && savedMode != "system") {
-                prefs.saveThemeMode(currentMode)
-                recreate()
-            }
-        }
-    }
-
-    override fun onWindowFocusChanged(hasFocus: Boolean) {
-        super.onWindowFocusChanged(hasFocus)
-        if (hasFocus) {
-            checkAndApplySystemTheme()
-        }
     }
 
     private fun showLogoutConfirmation() {
@@ -530,9 +501,10 @@ class MainActivity : AppCompatActivity() {
 
     private fun onPowerClick() {
         if (calculator.applyPower()) {
-            updateDisplay()
             showToast("Enter exponent")
-        } else if (calculator.isErrorState) {
+            updateDisplay()
+        }
+        else if (calculator.isErrorState) {
             showErrorState()
         }
     }
@@ -542,6 +514,17 @@ class MainActivity : AppCompatActivity() {
             updateDisplay()
         }
         else if (calculator.isErrorState) showErrorState()
+    }
+
+    private fun logSpecialOperation(expression: String, result: String) {
+        logEvent("special", "$expression=$result")
+        
+        NotificationHelper.send(
+            this,
+            "History Added",
+            "$expression = $result",
+            3001
+        )
     }
 
     private fun onClearClick() {
@@ -629,10 +612,6 @@ class MainActivity : AppCompatActivity() {
         super.onConfigurationChanged(newConfig)
         applyAdaptiveLayout(newConfig.orientation)
         advancedRow.visibility = if (isAdvancedVisible) View.VISIBLE else View.GONE
-        
-        if (prefs.isFollowSystemTheme()) {
-            ThemeManager.applySystemTheme()
-        }
     }
 
     private fun applyAdaptiveLayout(orientation: Int) {

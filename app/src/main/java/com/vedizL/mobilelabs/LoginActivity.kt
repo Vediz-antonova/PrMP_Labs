@@ -29,12 +29,7 @@ class LoginActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         
         val prefs = ThemePreferences(this)
-        
-        if (prefs.isFollowSystemTheme()) {
-            ThemeManager.applySystemTheme()
-        } else {
-            ThemeManager.applyDefaultTheme(prefs.getThemeMode())
-        }
+        ThemeManager.applyDefaultTheme(prefs.getThemeMode())
         
         setContentView(R.layout.activity_login)
 
@@ -102,41 +97,12 @@ class LoginActivity : AppCompatActivity() {
         }
     }
 
-    override fun onResume() {
-        super.onResume()
-        checkAndApplySystemTheme()
-    }
-
-    private fun checkAndApplySystemTheme() {
-        val prefs = ThemePreferences(this)
-        if (prefs.isFollowSystemTheme()) {
-            val currentNightMode = resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK
-            val currentMode = when (currentNightMode) {
-                Configuration.UI_MODE_NIGHT_YES -> "dark"
-                Configuration.UI_MODE_NIGHT_NO -> "light"
-                else -> "light"
-            }
-            val savedMode = prefs.getThemeMode()
-            if (savedMode != currentMode && savedMode != "system") {
-                prefs.saveThemeMode(currentMode)
-                recreate()
-            }
-        }
-    }
-
-    override fun onWindowFocusChanged(hasFocus: Boolean) {
-        super.onWindowFocusChanged(hasFocus)
-        if (hasFocus) {
-            checkAndApplySystemTheme()
-        }
-    }
-
     private fun showBiometricLoginPrompt(email: String) {
         BiometricAuthManager.showBiometricPrompt(
             this,
             "Login with Biometric",
             "Verify your identity for $email",
-            "Use your fingerprint or face recognition",
+            "Use your fingerprint",
             onSuccess = {
                 val token = BiometricAuthManager.getBiometricToken(email)
                 if (token != null && BiometricAuthManager.verifyBiometricToken(email, token)) {
@@ -180,7 +146,7 @@ class LoginActivity : AppCompatActivity() {
     private fun offerBiometricEnrollment(email: String) {
         AlertDialog.Builder(this)
             .setTitle("Enable Biometric Login?")
-            .setMessage("Would you like to enable fingerprint/face recognition for faster login next time?")
+            .setMessage("Would you like to enable fingerprint recognition for faster login next time?")
             .setPositiveButton("Yes") { _, _ ->
                 enableBiometricForAccount(email)
             }
@@ -249,15 +215,5 @@ class LoginActivity : AppCompatActivity() {
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         startActivity(intent)
         finish()
-    }
-
-    override fun onConfigurationChanged(newConfig: Configuration) {
-        super.onConfigurationChanged(newConfig)
-        val prefs = ThemePreferences(this)
-        if (prefs.isFollowSystemTheme()) {
-            ThemeManager.applySystemTheme()
-        } else {
-            ThemeManager.applyDefaultTheme(prefs.getThemeMode())
-        }
     }
 }

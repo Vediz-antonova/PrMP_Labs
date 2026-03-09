@@ -16,12 +16,7 @@ object ThemeManager {
         when (mode) {
             "light" -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
             "dark" -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
-            "system" -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
         }
-    }
-
-    fun applySystemTheme() {
-        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
     }
 
     fun applyCustomColors(activity: Activity) {
@@ -29,8 +24,7 @@ object ThemeManager {
 
         if (!prefs.isCustomThemeEnabled()) return
 
-        val display = activity.findViewById<TextView?>(R.id.tvDisplay)
-        if (display == null) return
+        val display = activity.findViewById<TextView?>(R.id.tvDisplay) ?: return
 
         val primary = prefs.getColor(
             ThemeKeys.PRIMARY,

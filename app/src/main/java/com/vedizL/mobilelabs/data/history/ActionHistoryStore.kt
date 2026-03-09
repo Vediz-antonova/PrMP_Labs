@@ -14,8 +14,13 @@ import androidx.core.content.edit
 object ActionHistoryStore {
     private const val PREFS_NAME = "mobilelabs_prefs"
     private const val KEY_HISTORY = "action_history"
+    private const val KEY_HISTORY_ANON = "action_history_anon"
     private const val MAX_ITEMS = 200
     private var cloudDocCounter: Long = 0L
+
+    private fun getHistoryKey(): String {
+        return if (AuthManager.isAnonymous()) KEY_HISTORY_ANON else "action_history_${AuthManager.getUserId()}"
+    }
 
     private fun generateHistoryDocId(timestamp: Long): String {
         val datePart = SimpleDateFormat("yyyyMMdd_HHmmss_SSS", Locale.US).format(Date(timestamp))
@@ -25,8 +30,9 @@ object ActionHistoryStore {
 
     fun log(context: Context, event: ActionEvent) {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val key = getHistoryKey()
         val jsonArray = try {
-            val s = prefs.getString(KEY_HISTORY, "[]") ?: "[]"
+            val s = prefs.getString(key, "[]") ?: "[]"
             JSONArray(s)
         } catch (e: Exception) {
             JSONArray()
@@ -44,7 +50,7 @@ object ActionHistoryStore {
             }
             newArr
         } else jsonArray
-        prefs.edit { putString(KEY_HISTORY, trimmed.toString()) }
+        prefs.edit { putString(key, trimmed.toString()) }
 
         if (!AuthManager.isAnonymous()) {
             val userId = AuthManager.getUserId()
@@ -63,8 +69,9 @@ object ActionHistoryStore {
 
     fun load(context: Context): List<ActionEvent> {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val key = getHistoryKey()
         val jsonArray = try {
-            JSONArray(prefs.getString(KEY_HISTORY, "[]") ?: "[]")
+            JSONArray(prefs.getString(key, "[]") ?: "[]")
         } catch (e: Exception) {
             JSONArray()
         }

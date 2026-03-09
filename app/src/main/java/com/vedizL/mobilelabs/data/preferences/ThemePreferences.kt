@@ -34,11 +34,4 @@ class ThemePreferences(context: Context) {
     fun setTutorialShown() {
         prefs.edit { putBoolean("tutorial_shown", true) }
     }
-
-    fun setFollowSystemTheme(enabled: Boolean) {
-        prefs.edit { putBoolean("follow_system_theme", enabled) }
-    }
-
-    fun isFollowSystemTheme(): Boolean =
-        prefs.getBoolean("follow_system_theme", true)
 }
