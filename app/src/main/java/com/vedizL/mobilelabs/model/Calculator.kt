@@ -516,6 +516,13 @@ class Calculator {
 
         // If we have characters in currentInput, delete from there
         if (currentInput.isNotEmpty()) {
+            // If currentInput is a single negative number like "-5", delete the whole thing
+            if (currentInput.startsWith("-") && currentInput.length == 2) {
+                val oldInput = currentInput
+                currentInput = Constants.INITIAL_DISPLAY_VALUE
+                return oldInput
+            }
+            
             if (currentInput.length > 1) {
                 var newInput = currentInput.dropLast(1)
 
