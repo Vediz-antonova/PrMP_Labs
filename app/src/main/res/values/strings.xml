@@ -33,9 +33,9 @@
     <!-- ===== Advanced Calculator Buttons ===== -->
     <string name="button_expand">…</string>
     <string name="button_square">x²</string>
-    <string name="button_power">xʸ</string>
+    <string name="button_sin">sin</string>
+    <string name="button_cos">cos</string>
     <string name="button_sqrt">√</string>
-    <string name="button_factorial">n!</string>
 
     <!-- ===== Toast Messages ===== -->
     <string name="toast_delete_digit">Last digit deleted</string>

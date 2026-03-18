@@ -83,7 +83,7 @@
                     android:text="@string/button_square" />
 
             <Button
-                    android:id="@+id/btnPowerRow"
+                    android:id="@+id/btnSinRow"
                     style="@style/Widget.Calculator.Button.Operation"
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
@@ -91,10 +91,10 @@
                     android:layout_margin="4dp"
                     android:textStyle="normal"
                     android:fontFamily="sans-serif"
-                    android:text="@string/button_power" />
+                    android:text="@string/button_sin" />
 
             <Button
-                    android:id="@+id/btnFactorialRow"
+                    android:id="@+id/btnCosRow"
                     style="@style/Widget.Calculator.Button.Operation"
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
@@ -102,7 +102,7 @@
                     android:layout_margin="4dp"
                     android:textStyle="normal"
                     android:fontFamily="sans-serif"
-                    android:text="@string/button_factorial" />
+                    android:text="@string/button_cos" />
         </LinearLayout>
 
         <!-- Button rows container (5/6 of space) -->

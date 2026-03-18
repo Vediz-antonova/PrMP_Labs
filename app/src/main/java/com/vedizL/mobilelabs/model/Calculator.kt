@@ -3,6 +3,8 @@ package com.vedizL.mobilelabs.model
 import com.vedizL.mobilelabs.utils.Constants
 import java.util.Locale
 import kotlin.math.pow
+import kotlin.math.sin
+import kotlin.math.cos
 import kotlin.math.sqrt
 
 class Calculator {
@@ -15,11 +17,14 @@ class Calculator {
     // Private state
     private var previousInput: String? = null
     private var currentOperation: String? = null
-    private var shouldResetInput: Boolean = false
+    var shouldResetInput: Boolean = false
+        private set
     private var pendingOperation: String? = null
     private var lastExpression: String? = null
-    // Log of the full expression tokens before '=' for logging on equals
-    private var expressionLog: String = ""
+    var displayExpression: String = ""
+        private set
+
+    fun hasPendingOperation(): Boolean = shouldResetInput
 
     // Number input
     fun inputDigit(digit: String): Boolean {
@@ -74,31 +79,53 @@ class Calculator {
             return false
         }
 
-        // If we're in "enter second number" mode (shouldResetInput is true),
-        // just change the operation without calculating - this allows operation reselection
-        // Only log the new operation, not the previous one
+        // Build the expression string
+        val opSymbol = getOperationSymbol(operation)
+        
+        // If user just changed operation (was entering second number), update the expression
         if (shouldResetInput && previousInput != null && currentOperation != null) {
-            expressionLog = "$currentInput$operation"
+            // User is changing operation - need to include the current number they already entered
+            // First add the number they entered for the previous operation
+            displayExpression += previousInput
+            // Then replace the operation
+            displayExpression = displayExpression.dropLast(getOperationSymbol(currentOperation).length)
+            displayExpression += opSymbol
         } else {
-            // Build expression logging tokens for new operations
-            if (expressionLog.isEmpty()) {
-                expressionLog = "$currentInput$operation"
+            // Check if we're continuing from a previous result (expression has "=")
+            if (displayExpression.contains("=")) {
+                // Start fresh from the result
+                displayExpression = currentInput
             } else {
-                expressionLog += "$currentInput$operation"
+                // Add current number to expression
+                displayExpression += currentInput
             }
+            // Add the operation symbol
+            displayExpression += opSymbol
         }
-
-        if (isErrorState) return false
 
         previousInput = currentInput
         currentOperation = operation
         shouldResetInput = true
+        // Clear currentInput after adding to expression
+        currentInput = ""
         return true
     }
 
-    fun calculateResult(): Boolean {
-        if (previousInput == null || (currentOperation == null && pendingOperation == null)) return false
+    private fun getOperationSymbol(operation: String?): String {
+        return when (operation) {
+            Constants.OP_ADD -> "+"
+            Constants.OP_SUBTRACT -> "-"
+            Constants.OP_MULTIPLY -> "×"
+            Constants.OP_DIVIDE -> "÷"
+            Constants.OP_POWER -> "^"
+            Constants.OP_SQUARE -> "²"
+            Constants.OP_SQRT -> "√"
+            Constants.OP_FACTORIAL -> "!"
+            else -> operation ?: ""
+        }
+    }
 
+    fun calculateResult(): Boolean {
         // Handle immediate operations (square, sqrt, factorial)
         if (pendingOperation != null) {
             if (!calculatePendingOperation()) {
@@ -109,54 +136,140 @@ class Calculator {
             return true
         }
 
-        val prev = previousInput!!.toDoubleOrNull() ?: return false
-        val current = currentInput.toDoubleOrNull() ?: return false
+        if (previousInput == null && currentInput == Constants.INITIAL_DISPLAY_VALUE) return false
 
-        val result = when (currentOperation) {
-            Constants.OP_ADD -> {
-                val res = prev + current
-                rememberExpression(previousInput, currentOperation, currentInput, res)
-                if (res.isInfinite() || res.isNaN()) {
-                    showError("Overflow")
-                    return false
-                }
-                res
-            }
-            Constants.OP_SUBTRACT -> {
-                val res = prev - current
-                rememberExpression(previousInput, currentOperation, currentInput, res)
-                if (res.isInfinite() || res.isNaN()) {
-                    showError("Overflow")
-                    return false
-                }
-                res
-            }
-            Constants.OP_MULTIPLY -> {
-                val res = prev * current
-                rememberExpression(previousInput, currentOperation, currentInput, res)
-                if (res.isInfinite() || res.isNaN()) {
-                    showError("Overflow")
-                    return false
-                }
-                res
-            }
-            Constants.OP_DIVIDE -> {
-                if (current == 0.0) {
-                    showError("Error")
-                    return false
-                }
-                val res = prev / current
-                rememberExpression(previousInput, currentOperation, currentInput, res)
-                res
-            }
-            else -> return false
+        // Build the full expression
+        val fullExpression = displayExpression + currentInput
+        
+        // Evaluate with proper precedence
+        val result = evaluateExpression(fullExpression)
+        
+        if (result == null || result.isNaN() || result.isInfinite()) {
+            showError("Error")
+            return false
         }
 
-        currentInput = formatNumber(result)
+        val formattedResult = formatNumber(result)
+        displayExpression = "$fullExpression=$formattedResult"
+        currentInput = formattedResult
         previousInput = null
         currentOperation = null
         shouldResetInput = false
         return true
+    }
+
+    private fun evaluateExpression(expr: String): Double? {
+        if (expr.isEmpty()) return null
+        
+        try {
+            // Parse the expression and evaluate with proper precedence
+            val values = mutableListOf<Double>()
+            val ops = mutableListOf<String>()
+            
+            var currentNum = StringBuilder()
+            var i = 0
+            
+            while (i < expr.length) {
+                val c = expr[i]
+                when {
+                    c.isDigit() || c == '.' || (c == '-' && currentNum.isEmpty()) -> {
+                        currentNum.append(c)
+                    }
+                    c == '-' && currentNum.isNotEmpty() && !currentNum.toString().endsWith("E") -> {
+                        // This is an operator
+                        if (currentNum.isNotEmpty()) {
+                            values.add(currentNum.toString().toDouble())
+                            currentNum = StringBuilder()
+                        }
+                        // Check for negative number
+                        if (i + 1 < expr.length && expr[i + 1].isDigit()) {
+                            currentNum.append(c)
+                        } else if (ops.isNotEmpty() || values.isNotEmpty()) {
+                            ops.add(c.toString())
+                        }
+                    }
+                    c == '+' || c == '-' && currentNum.toString().isNotEmpty() && !currentNum.toString().endsWith("E") -> {
+                        if (currentNum.isNotEmpty()) {
+                            values.add(currentNum.toString().toDouble())
+                            currentNum = StringBuilder()
+                        }
+                        ops.add(c.toString())
+                    }
+                    c == '×' || c == '÷' || c == '^' -> {
+                        if (currentNum.isNotEmpty()) {
+                            values.add(currentNum.toString().toDouble())
+                            currentNum = StringBuilder()
+                        }
+                        ops.add(c.toString())
+                    }
+                    c == '²' -> {
+                        // Square - apply to last value
+                        if (values.isNotEmpty()) {
+                            val lastIdx = values.size - 1
+                            values[lastIdx] = values[lastIdx] * values[lastIdx]
+                        }
+                    }
+                    c == '√' -> {
+                        // Square root - will be handled specially
+                    }
+                    c == '!' -> {
+                        // Factorial - apply to last value
+                        if (values.isNotEmpty()) {
+                            val v = values.last().toInt()
+                            var fact = 1
+                            for (j in 2..v) {
+                                fact *= j
+                            }
+                            values[values.size - 1] = fact.toDouble()
+                        }
+                    }
+                }
+                i++
+            }
+            
+            // Add last number
+            if (currentNum.isNotEmpty()) {
+                values.add(currentNum.toString().toDouble())
+            }
+            
+            if (values.isEmpty()) return null
+            if (values.size == 1) return values[0]
+            
+            // First pass: handle *, /, ^
+            var idx = 0
+            while (idx < ops.size) {
+                val op = ops[idx]
+                if (op == "×" || op == "÷" || op == "^") {
+                    val a = values[idx]
+                    val b = values[idx + 1]
+                    val res = when (op) {
+                        "×" -> a * b
+                        "÷" -> if (b == 0.0) return null else a / b
+                        "^" -> a.pow(b)
+                        else -> b
+                    }
+                    values[idx] = res
+                    values.removeAt(idx + 1)
+                    ops.removeAt(idx)
+                } else {
+                    idx++
+                }
+            }
+            
+            // Second pass: handle +, -
+            var result = values[0]
+            for (j in ops.indices) {
+                result = if (ops[j] == "+") {
+                    result + values[j + 1]
+                } else {
+                    result - values[j + 1]
+                }
+            }
+            
+            return result
+        } catch (e: Exception) {
+            return null
+        }
     }
 
     private fun calculatePendingOperation(): Boolean {
@@ -171,6 +284,8 @@ class Calculator {
                     showError("Overflow")
                     return false
                 }
+                currentInput = formatNumber(res)
+                displayExpression = "$value^$exponent=$currentInput"
                 res
             }
             Constants.OP_SQUARE -> {
@@ -179,6 +294,8 @@ class Calculator {
                     showError("Overflow")
                     return false
                 }
+                currentInput = formatNumber(res)
+                displayExpression = "$value²=$currentInput"
                 res
             }
             Constants.OP_SQRT -> {
@@ -186,7 +303,10 @@ class Calculator {
                     showError("Invalid")
                     return false
                 }
-                sqrt(value)
+                val res = sqrt(value)
+                currentInput = formatNumber(res)
+                displayExpression = "√$value=$currentInput"
+                res
             }
             Constants.OP_FACTORIAL -> {
                 if (value < 0 || value != value.toLong().toDouble()) {
@@ -204,31 +324,31 @@ class Calculator {
                     fact = fact.multiply(java.math.BigInteger.valueOf(i.toLong()))
                 }
                 currentInput = fact.toString()
-                rememberExpression(previousInput, opSymbol, currentInput, 0.0)
+                displayExpression = "$value!=$currentInput"
                 pendingOperation = null
                 previousInput = null
-                shouldResetInput = false
+                shouldResetInput = true
                 return true
             }
             else -> return false
         }
 
-        rememberExpression(previousInput, opSymbol, currentInput, result)
-        currentInput = formatNumber(result)
         pendingOperation = null
         previousInput = null
-        shouldResetInput = false
+        shouldResetInput = true
         return true
     }
 
-    fun getExpressionLog(): String = expressionLog
+    fun getHistoryExpression(): String {
+        return displayExpression
+    }
 
     fun resetExpressionLog() {
-        expressionLog = ""
+        displayExpression = ""
     }
 
     fun finalizeExpressionBeforeEquals() {
-        expressionLog += currentInput
+        // Expression is already built in displayExpression
     }
 
     fun setCurrentInput(value: String) {
@@ -313,6 +433,50 @@ class Calculator {
         return calculatePendingOperation()
     }
 
+    fun applySin(): Boolean {
+        if (isErrorState) {
+            clearError()
+            return false
+        }
+
+        val value = currentInput.toDoubleOrNull() ?: return false
+        val radians = Math.toRadians(value)
+        val result = sin(radians)
+
+        if (result.isInfinite() || result.isNaN()) {
+            showError("Error")
+            return false
+        }
+
+        val formattedResult = formatNumber(result)
+        displayExpression = "sin($currentInput)=$formattedResult"
+        currentInput = formattedResult
+        shouldResetInput = true
+        return true
+    }
+
+    fun applyCos(): Boolean {
+        if (isErrorState) {
+            clearError()
+            return false
+        }
+
+        val value = currentInput.toDoubleOrNull() ?: return false
+        val radians = Math.toRadians(value)
+        val result = cos(radians)
+
+        if (result.isInfinite() || result.isNaN()) {
+            showError("Error")
+            return false
+        }
+
+        val formattedResult = formatNumber(result)
+        displayExpression = "cos($currentInput)=$formattedResult"
+        currentInput = formattedResult
+        shouldResetInput = true
+        return true
+    }
+
     // Special functions
     fun clear() {
         clearError()
@@ -321,6 +485,7 @@ class Calculator {
         currentOperation = null
         shouldResetInput = false
         pendingOperation = null
+        displayExpression = ""
     }
 
     fun negate(): Boolean {
@@ -348,6 +513,22 @@ class Calculator {
             return null
         }
 
+        // If we have displayExpression (user entered an operation), delete from there
+        if (displayExpression.isNotEmpty()) {
+            val deleted = displayExpression.last().toString()
+            displayExpression = displayExpression.dropLast(1)
+            
+            // If displayExpression is now empty, return to just currentInput
+            if (displayExpression.isEmpty()) {
+                currentInput = previousInput ?: Constants.INITIAL_DISPLAY_VALUE
+                previousInput = null
+                currentOperation = null
+                shouldResetInput = false
+            }
+            return deleted
+        }
+
+        // Normal digit deletion from currentInput
         if (currentInput.length > 1) {
             var newInput = currentInput.dropLast(1)
 

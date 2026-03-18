@@ -26,4 +26,6 @@ object Constants {
     const val OP_POWER = "^y"
     const val OP_SQRT = "√"
     const val OP_FACTORIAL = "n!"
+    const val OP_SIN = "sin"
+    const val OP_COS = "cos"
 }

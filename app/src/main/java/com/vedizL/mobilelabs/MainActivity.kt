@@ -402,8 +402,8 @@ class MainActivity : AppCompatActivity() {
 
         findViewById<Button>(R.id.btnSqrtRow).setOnClickListener { onSqrtClick() }
         findViewById<Button>(R.id.btnSquareRow).setOnClickListener { onSquareClick() }
-        findViewById<Button>(R.id.btnPowerRow).setOnClickListener { onPowerClick() }
-        findViewById<Button>(R.id.btnFactorialRow).setOnClickListener { onFactorialClick() }
+        findViewById<Button>(R.id.btnSinRow).setOnClickListener { onSinClick() }
+        findViewById<Button>(R.id.btnCosRow).setOnClickListener { onCosClick() }
     }
 
     private fun toggleAdvancedPanel() {
@@ -499,19 +499,20 @@ class MainActivity : AppCompatActivity() {
         else if (calculator.isErrorState) showErrorState()
     }
 
-    private fun onPowerClick() {
-        if (calculator.applyPower()) {
-            showToast("Enter exponent")
+    private fun onSinClick() {
+        if (calculator.applySin()) {
             updateDisplay()
+            val historyExpr = calculator.displayExpression
+            logEvent("sin", historyExpr)
         }
-        else if (calculator.isErrorState) {
-            showErrorState()
-        }
+        else if (calculator.isErrorState) showErrorState()
     }
 
-    private fun onFactorialClick() {
-        if (calculator.applyFactorial()) {
+    private fun onCosClick() {
+        if (calculator.applyCos()) {
             updateDisplay()
+            val historyExpr = calculator.displayExpression
+            logEvent("cos", historyExpr)
         }
         else if (calculator.isErrorState) showErrorState()
     }
@@ -540,18 +541,18 @@ class MainActivity : AppCompatActivity() {
 
     private fun onEqualsClick() {
         calculator.finalizeExpressionBeforeEquals()
-        val logExpr = calculator.getExpressionLog()
         if (calculator.calculateResult()) {
             updateDisplay()
+            val historyExpr = calculator.getHistoryExpression()
             val finalRes = calculator.currentInput
 
-            logEvent("equals", "$logExpr=$finalRes")
+            logEvent("equals", historyExpr)
             calculator.resetExpressionLog()
 
             NotificationHelper.send(
                 this,
                 "History Added",
-                "$logExpr = $finalRes",
+                historyExpr,
                 3001
             )
 
@@ -561,7 +562,21 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun updateDisplay() {
-        tvDisplay.text = calculator.currentInput
+        val displayText = when {
+            calculator.isErrorState -> calculator.currentInput
+            calculator.displayExpression.contains("=") -> {
+                // Already has result, just show the expression
+                calculator.displayExpression
+            }
+            calculator.displayExpression.isNotEmpty() -> {
+                // Show expression plus current input being typed (if not empty)
+                val expr = calculator.displayExpression
+                val input = calculator.currentInput
+                if (input.isNotEmpty()) expr + input else expr
+            }
+            else -> calculator.currentInput.ifEmpty { "0" }
+        }
+        tvDisplay.text = displayText
         tvDisplay.setTextColor(
             if (calculator.isErrorState)
                 ContextCompat.getColor(this, android.R.color.holo_red_dark)
@@ -622,8 +637,8 @@ class MainActivity : AppCompatActivity() {
             R.id.btnAdd, R.id.btnSubtract, R.id.btnMultiply, R.id.btnDivide,
             R.id.btnDecimal, R.id.btnPercent, R.id.btnClear,
             R.id.btnPlusMinus, R.id.btnEquals, R.id.btnExpand,
-            R.id.btnSqrtRow, R.id.btnSquareRow, R.id.btnPowerRow,
-            R.id.btnFactorialRow
+            R.id.btnSqrtRow, R.id.btnSquareRow, R.id.btnSinRow,
+            R.id.btnCosRow
         ).map { findViewById<Button>(it) }
 
         val isLandscape = orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
