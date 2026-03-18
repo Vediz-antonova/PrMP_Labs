@@ -41,8 +41,8 @@ class Calculator {
         if (currentInput.length >= Constants.MAX_INPUT_LENGTH) return false
 
         currentInput = when {
-            currentInput == Constants.INITIAL_DISPLAY_VALUE && digit != "0" -> digit
-            currentInput == Constants.INITIAL_DISPLAY_VALUE -> Constants.INITIAL_DISPLAY_VALUE
+            (currentInput == Constants.INITIAL_DISPLAY_VALUE || currentInput.isEmpty()) && digit != "0" -> digit
+            currentInput == Constants.INITIAL_DISPLAY_VALUE || currentInput.isEmpty() -> Constants.INITIAL_DISPLAY_VALUE
             else -> currentInput + digit
         }
 
@@ -136,10 +136,11 @@ class Calculator {
             return true
         }
 
-        if (previousInput == null && currentInput == Constants.INITIAL_DISPLAY_VALUE) return false
+        if (previousInput == null && currentInput.isEmpty()) return false
 
         // Build the full expression
-        val fullExpression = displayExpression + currentInput
+        val inputToUse = if (currentInput.isEmpty()) previousInput ?: "" else currentInput
+        val fullExpression = displayExpression + inputToUse
         
         // Evaluate with proper precedence
         val result = evaluateExpression(fullExpression)
@@ -513,41 +514,69 @@ class Calculator {
             return null
         }
 
-        // If we have displayExpression (user entered an operation), delete from there
+        // If we have characters in currentInput, delete from there
+        if (currentInput.isNotEmpty()) {
+            if (currentInput.length > 1) {
+                var newInput = currentInput.dropLast(1)
+
+                if (newInput.endsWith(".")) {
+                    newInput = newInput.dropLast(1)
+                }
+
+                if (newInput == "-") {
+                    return "-"
+                }
+
+                if (newInput.isEmpty()) {
+                    newInput = Constants.INITIAL_DISPLAY_VALUE
+                }
+
+                val deletedChar = currentInput.last().toString()
+                currentInput = newInput
+                return deletedChar
+            } else {
+                val oldInput = currentInput
+                currentInput = Constants.INITIAL_DISPLAY_VALUE
+                return oldInput
+            }
+        }
+
+        // currentInput is empty - user deleted the entire second number
+        // Delete operation from displayExpression and go back to previousInput
         if (displayExpression.isNotEmpty()) {
-            val deleted = displayExpression.last().toString()
-            displayExpression = displayExpression.dropLast(1)
-            
-            // If displayExpression is now empty, return to just currentInput
-            if (displayExpression.isEmpty()) {
+            // Check if we're after equals
+            if (displayExpression.contains("=")) {
+                // After equals - use the result as current input
                 currentInput = previousInput ?: Constants.INITIAL_DISPLAY_VALUE
+                displayExpression = ""
                 previousInput = null
                 currentOperation = null
                 shouldResetInput = false
+                // Now delete from currentInput
+                if (currentInput.length > 1) {
+                    val newInput = currentInput.dropLast(1)
+                    currentInput = newInput
+                    return newInput.last().toString()
+                } else {
+                    val oldInput = currentInput
+                    currentInput = Constants.INITIAL_DISPLAY_VALUE
+                    return oldInput
+                }
             }
+
+            // Delete operation from displayExpression
+            val deleted = displayExpression.last().toString()
+            displayExpression = displayExpression.dropLast(1)
+            
+            // Go back to previousInput
+            currentInput = previousInput ?: Constants.INITIAL_DISPLAY_VALUE
+            previousInput = null
+            currentOperation = null
+            shouldResetInput = false
             return deleted
         }
 
-        // Normal digit deletion from currentInput
-        if (currentInput.length > 1) {
-            var newInput = currentInput.dropLast(1)
-
-            if (newInput.endsWith(".")) {
-                newInput = newInput.dropLast(1)
-            }
-
-            if (newInput == "-" || newInput.isEmpty()) {
-                newInput = Constants.INITIAL_DISPLAY_VALUE
-            }
-
-            val deletedChar = currentInput.last().toString()
-            currentInput = newInput
-            return deletedChar
-        } else {
-            val oldInput = currentInput
-            currentInput = Constants.INITIAL_DISPLAY_VALUE
-            return oldInput
-        }
+        return null
     }
 
     // Error handling
