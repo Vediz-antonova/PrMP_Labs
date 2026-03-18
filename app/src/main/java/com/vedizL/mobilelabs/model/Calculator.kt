@@ -84,10 +84,9 @@ class Calculator {
         
         // If user just changed operation (was entering second number), update the expression
         if (shouldResetInput && previousInput != null && currentOperation != null) {
-            // User is changing operation - need to include the current number they already entered
-            // First add the number they entered for the previous operation
-            displayExpression += previousInput
-            // Then replace the operation
+            // Add the current input (the number already entered for this operation)
+            displayExpression += currentInput.ifEmpty { "0" }
+            // Replace the operation
             displayExpression = displayExpression.dropLast(getOperationSymbol(currentOperation).length)
             displayExpression += opSymbol
         } else {
@@ -137,10 +136,18 @@ class Calculator {
         }
 
         if (previousInput == null && currentInput.isEmpty()) return false
+        
+        // Если displayExpression пуста или не содержит операторов - просто показываем текущее число
+        if (displayExpression.isEmpty() || !displayExpression.contains(Regex("[+\\-×÷^²√!]"))) {
+            return false
+        }
 
         // Build the full expression
-        val inputToUse = if (currentInput.isEmpty()) previousInput ?: "" else currentInput
+        // Use "0" if currentInput is empty (user typed operator but no second number)
+        val inputToUse = if (currentInput.isEmpty()) "0" else currentInput
         val fullExpression = displayExpression + inputToUse
+        
+        android.util.Log.d("Calculator", "calculateResult: displayExpression='$displayExpression', currentInput='$currentInput', previousInput='$previousInput', inputToUse='$inputToUse', fullExpression='$fullExpression'")
         
         // Evaluate with proper precedence
         val result = evaluateExpression(fullExpression)
@@ -162,6 +169,8 @@ class Calculator {
     private fun evaluateExpression(expr: String): Double? {
         if (expr.isEmpty()) return null
         
+        android.util.Log.d("Calculator", "evaluateExpression: expr='$expr'")
+        
         try {
             // Parse the expression and evaluate with proper precedence
             val values = mutableListOf<Double>()
@@ -172,6 +181,7 @@ class Calculator {
             
             while (i < expr.length) {
                 val c = expr[i]
+                android.util.Log.v("Calculator", "Parsing char '$c' at index $i, currentNum='$currentNum', values=$values, ops=$ops")
                 when {
                     c.isDigit() || c == '.' || (c == '-' && currentNum.isEmpty()) -> {
                         currentNum.append(c)
@@ -182,14 +192,10 @@ class Calculator {
                             values.add(currentNum.toString().toDouble())
                             currentNum = StringBuilder()
                         }
-                        // Check for negative number
-                        if (i + 1 < expr.length && expr[i + 1].isDigit()) {
-                            currentNum.append(c)
-                        } else if (ops.isNotEmpty() || values.isNotEmpty()) {
-                            ops.add(c.toString())
-                        }
+                        // Always add as operator, not as negative number
+                        ops.add(c.toString())
                     }
-                    c == '+' || c == '-' && currentNum.toString().isNotEmpty() && !currentNum.toString().endsWith("E") -> {
+                    c == '+' -> {
                         if (currentNum.isNotEmpty()) {
                             values.add(currentNum.toString().toDouble())
                             currentNum = StringBuilder()
@@ -205,6 +211,7 @@ class Calculator {
                     }
                     c == '²' -> {
                         // Square - apply to last value
+                        android.util.Log.v("Calculator", "Processing square symbol")
                         if (values.isNotEmpty()) {
                             val lastIdx = values.size - 1
                             values[lastIdx] = values[lastIdx] * values[lastIdx]
@@ -212,9 +219,11 @@ class Calculator {
                     }
                     c == '√' -> {
                         // Square root - will be handled specially
+                        android.util.Log.v("Calculator", "Processing sqrt symbol")
                     }
                     c == '!' -> {
                         // Factorial - apply to last value
+                        android.util.Log.v("Calculator", "Processing factorial symbol")
                         if (values.isNotEmpty()) {
                             val v = values.last().toInt()
                             var fact = 1
@@ -223,6 +232,9 @@ class Calculator {
                             }
                             values[values.size - 1] = fact.toDouble()
                         }
+                    }
+                    else -> {
+                        android.util.Log.w("Calculator", "Unhandled char '$c' at index $i")
                     }
                 }
                 i++
@@ -233,8 +245,12 @@ class Calculator {
                 values.add(currentNum.toString().toDouble())
             }
             
+            android.util.Log.d("Calculator", "evaluateExpression parsed: values=$values, ops=$ops")
+            
             if (values.isEmpty()) return null
             if (values.size == 1) return values[0]
+            
+            android.util.Log.d("Calculator", "About to process ${ops.size} operators: $ops")
             
             // First pass: handle *, /, ^
             var idx = 0
@@ -257,14 +273,19 @@ class Calculator {
                 }
             }
             
+            android.util.Log.d("Calculator", "After first pass: values=$values, ops=$ops")
+            
             // Second pass: handle +, -
+            android.util.Log.d("Calculator", "Second pass start: result=${values[0]}, ops=$ops")
             var result = values[0]
             for (j in ops.indices) {
+                android.util.Log.d("Calculator", "Second pass: j=$j, ops[$j]=${ops[j]}, values[${j+1}]=${values[j+1]}, result before=$result")
                 result = if (ops[j] == "+") {
                     result + values[j + 1]
                 } else {
                     result - values[j + 1]
                 }
+                android.util.Log.d("Calculator", "Second pass: result after=$result")
             }
             
             return result
@@ -513,6 +534,8 @@ class Calculator {
             clearError()
             return null
         }
+
+        android.util.Log.d("Calculator", "deleteLast: currentInput='$currentInput', displayExpression='$displayExpression', previousInput='$previousInput', currentOperation='$currentOperation', shouldResetInput=$shouldResetInput")
 
         // If we have characters in currentInput, delete from there
         if (currentInput.isNotEmpty()) {
